@@ -126,37 +126,128 @@
 
 \begin{frame}{\lstinline!LazyDeque!}
   \begin{itemize}
-  \item TODO
+  \item Original implementation
+  \item Uses \lstinline!AtomicReferenceArray! for tasks
+  \item Unbounded and almost lock-free (\lstinline!steal()! and
+    \lstinline!expand()! only allow one thief)
+  \item Owner of the deque only lazily updated the location of the
+    deque head, i.e. only when it tries to take something and finds it
+    gone
   \end{itemize}
 \end{frame}
 
-\begin{frame}{\lstinline!WorkStealingLazyDeque!}
+\begin{frame}[fragile]{\lstinline!WorkStealingLazyDeque!}
   \begin{itemize}
-  \item TODO
+  \item Based on \lstinline!LazyDeque!
+  \item \lstinline!LazyDeque! uses
+    \lstinline!tasks.getAndSet(index, null)! to get a queue element
+  \item \lstinline!AtomicReferenceArray!:
+\begin{lstlisting}[basicstyle=\fontsize{9}{11}\selectfont\ttfamily]
+public final E getAndSet(int i, E newValue) {
+  while (true) {
+    E current = get(i);
+    if (compareAndSet(i, current, newValue))
+      return current;
+  }
+}
+\end{lstlisting}
+  \item Instead of using \lstinline!getAndSet!, this deque uses
+    \lstinline!get! and \lstinline!compareAndSet!
   \end{itemize}
 \end{frame}
 
 \begin{frame}{\lstinline!WorkStealingDeque!}
+  \begin{thebibliography}{10}
+    \beamertemplatearticlebibitems
+    
+  \bibitem{dynamic}
+    Chase, D.R., Lev, Yossi, {\em Dynamic circular work-stealing deque},
+    \url{http://portal.acm.org/citation.cfm?id=1073974}
+  \end{thebibliography}
+
+  \vspace{\stretch{1}}
+
   \begin{itemize}
-  \item TODO
+  \item Unbounded work-stealing deque implementation
+  \item Uses cyclic non-atomic reference array for tasks
+  \item \lstinline!top! is an atomic integer
+  \item Lock-free, uses Compare-and-Swap
   \end{itemize}
 \end{frame}
 
 \begin{frame}{\lstinline!DuplicatingWorkStealingDeque!}
+  \begin{thebibliography}{10}
+    \beamertemplatearticlebibitems
+    
+  \bibitem{duplicating}
+    Leijen, D, et al., {\em The design of a task parallel library},
+    \url{http://portal.acm.org/citation.cfm?id=1640106&amp;dl=ACM}
+  \end{thebibliography}
+
+  \vspace{\stretch{1}}
+
   \begin{itemize}
-  \item TODO
+  \item Uses cyclic non-atomic reference array for tasks
+  \item Potentially returns a pushed element more than once:
+    \begin{itemize}
+    \item[$\rightarrow$] \lstinline!put! and \lstinline!steal! behave
+      like normal, but \lstinline!take! is allowed to either take an
+      element (and remove it from the queue), or just duplicate an
+      element in the queue
+    \end{itemize}
+  \item Each task is associated with a state
+    \begin{itemize}
+    \item [$\rightarrow$] \lstinline!Init!, \lstinline!Running! or
+      \lstinline!Done!
+    \end{itemize}
+  \item When executing a task, we first check whether it has been run
+    already
+  \item \lstinline!steal()! and \lstinline!expand()! synchronized,
+    \lstinline!take()! is synchronized if there's only one item in the
+    queue
+  \item Variation: eager execution instead of queue expansion
   \end{itemize}
 \end{frame}
 
 \begin{frame}{\lstinline!IdempotentWorkStealingDeque!}
+  \begin{thebibliography}{10}
+    \beamertemplatearticlebibitems
+    
+  \bibitem{idempotent}
+    Michael, M.M., et al., {\em Idempotent work stealing},
+    \url{http://portal.acm.org/citation.cfm?id=1594835.1504186}
+  \end{thebibliography}
+
+  \vspace{\stretch{1}}  
+
   \begin{itemize}
-  \item TODO
+  \item Same basic idea as \lstinline!DuplicatingWorkStealingDeque!
+  \item Uses cyclic non-atomic reference array for tasks
+  \item Lock-free
+  \item Three implementations: \lstinline!FIFOQueue!,
+    \lstinline!LIFOQueue!, \lstinline!Deque!
+  \item \lstinline!Deque! performs the best
   \end{itemize}
 \end{frame}
 
 \begin{frame}{\lstinline!DynamicWorkStealingDeque!}
+  \begin{thebibliography}{10}
+    \beamertemplatearticlebibitems
+    
+  \bibitem{idempotent}
+    Hendler, Danny, et al., {\em A dynamic-sized nonblocking work stealing deque},
+    \url{http://www.springerlink.com/index/Y7HQ174L92170355.pdf}
+  \end{thebibliography}
+
+  \vspace{\stretch{1}}  
+
   \begin{itemize}
-  \item TODO
+  \item Uses linked array nodes for tasks
+  \item Lock-free implementation
+  \item Usually slower than the other work-stealing queue implementations
+    \begin{itemize}
+    \item[$\rightarrow$] Implementation is quite complex
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
@@ -190,6 +281,10 @@
 \begin{frame}{TODO}
   \begin{itemize}
   \item TODO
+  \item Mely
+  \item SLAW
+  \item Check papers ``Resource Contention''
+  \item Check papers ``Locality Aware Scheduling''
   \end{itemize}
 \end{frame}
 
