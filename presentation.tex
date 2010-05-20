@@ -253,8 +253,35 @@ public final E getAndSet(int i, E newValue) {
 
 \begin{frame}{Results}
   \begin{itemize}
-  \item TODO
+  \item Biggest bottleneck: Local FIFO queue for pending work (try to
+    get rid of it)
+  \item Idempotent/duplicating queues are almost as fast as other
+    queue implementations
+    \begin{itemize}
+    \item[$\rightarrow$] might use them in the second part
+    \end{itemize}
+  \item Original implementation was very good already
+    \begin{itemize}
+    \item[$\rightarrow$] small improvement by using \lstinline!get!
+      and \lstinline!compareAndSet! instead of \lstinline!getAndSet!
+    \end{itemize}
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Results: Cache-misses}
+  \begin{itemize}
+  \item Work-stealing scheduler: More L1 cache misses than threads
+    implementation
+    \begin{itemize}
+    \item[$\rightarrow$] but fewer L2 cache misses
+    \end{itemize}
+  \item Work-stealing scheduler: L1 and L2 cache miss ratio is very
+    low
+    \begin{itemize}
+    \item[$\rightarrow$] besides an increase in cache misses, there's
+      also an increase in cache references (array index check)
+    \end{itemize}
+  \end{itemize}  
 \end{frame}
 
 
@@ -278,13 +305,23 @@ public final E getAndSet(int i, E newValue) {
   \end{itemize}
 \end{frame}
 
-\begin{frame}{TODO}
+\begin{frame}{Literature Review}
   \begin{itemize}
-  \item TODO
-  \item Mely
-  \item SLAW
-  \item Check papers ``Resource Contention''
-  \item Check papers ``Locality Aware Scheduling''
+  \item Blumofe et al.: Locality-guided work stealing (initial
+    placement)
+    \begin{itemize}
+    \item[$\rightarrow$] each process maintains a mailbox: FIFO queue
+      of pointers to threads that have affinity for the process
+    \end{itemize}
+  \item SLAW scheduler (Habanero Java): Same idea as Blumofe
+  \item X10: Places to partition the global address space
+  \item Mely: Locality-aware stealing heuristics
+    \begin{itemize}
+    \item[$\rightarrow$] aims at improving cache usage by minimizing
+      the costs of cache misses
+    \item[$\rightarrow$] orders cores by their ``distance'' from the
+      stealing core
+    \end{itemize}
   \end{itemize}
 \end{frame}
 
