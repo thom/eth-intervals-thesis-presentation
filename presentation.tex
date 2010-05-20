@@ -87,30 +87,118 @@
 
 \section*{Introduction}
 
-\begin{frame}{Executive Summary}
-  \begin{itemize}
-  \item TODO
-  \end{itemize}
+% \begin{frame}{Executive Summary}
+%   \begin{itemize}
+%   \item TODO
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}{Task Description}
+  The goal of this project is to improve the efficiency of the
+  Intervals scheduler and it consists of two parts:
+
+  \vspace{\stretch{1}}
+
+  \begin{enumerate}
+  \item Explore and profile different work-stealing queue
+    implementations
+  \item Locality-aware work-stealing
+  \end{enumerate}
 \end{frame}
 
 
-\section{TODO}
+\section{Part 1: Work-stealing queue implementations}
 
 \begin{frame}{Outline}
   \tableofcontents[current]
 \end{frame}
 
-\begin{frame}{TODO}
-  TODO
+\begin{frame}{Introduction}
+  \begin{itemize}
+  \item In a work-stealing scheduler, each worker keeps a pool of work
+    items waiting to be executed
+  \item The current Intervals implementation uses doubled-ended queues
+  \item The first part of the thesis will be to explore alternative
+    queue implementations and to compare them to the current
+    implementation
+  \end{itemize}
 \end{frame}
 
-
-\section*{Outro}
-
-\begin{frame}{Summary}
+\begin{frame}{\lstinline!LazyDeque!}
   \begin{itemize}
   \item TODO
   \end{itemize}
 \end{frame}
+
+\begin{frame}{\lstinline!WorkStealingLazyDeque!}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{\lstinline!WorkStealingDeque!}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{\lstinline!DuplicatingWorkStealingDeque!}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{\lstinline!IdempotentWorkStealingDeque!}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{\lstinline!DynamicWorkStealingDeque!}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+
+\section{Part 2: Locality-aware work-stealing}
+
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\begin{frame}{Introduction}
+  \begin{itemize}
+  \item Intervals scheduler randomly schedules work items
+  \item When stealing a work item, the worker chooses his victim by
+    ``random''
+  \item To improve performance and reduce cache misses, work items
+    that access the same data should be scheduled on the same worker
+    or a worker ``nearby''
+  \item In locality-aware work-stealing, each work item can be given
+    an affinity for a worker, and when a worker obtains a work item it
+    gives priority to the work items with affinity to it
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{TODO}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+% \section*{Outro}
+
+% \begin{frame}{Summary}
+%   \begin{itemize}
+%   \item TODO
+%   \end{itemize}
+% \end{frame}
 
 \end{document}
