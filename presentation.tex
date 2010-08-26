@@ -39,16 +39,15 @@
 \providecommand{\Author}{Thomas Weibel <weibelt@ethz.ch>}
 \providecommand{\Institute}{Laboratory for Software Technology, \\
   Swiss Federal Institute of Technology Z\"urich}
-\providecommand{\Date}{\today}
+\providecommand{\Date}{September 7, 2010}
 
 % PDF settings
 \hypersetup{
   pdftitle={\Title, \Subtitle},
   pdfauthor={\Author},
   pdfsubject={\Institute},
-  pdfkeywords={
-    Thomas Weibel, Intervals, Parallel Programming, Work-stealing Scheduler
-  } 
+  pdfkeywords={Master's Thesis, Thomas Weibel,
+    Intervals, Parallel Programming}
 }
 
 % Titlepage
@@ -84,16 +83,22 @@
   \titlepage
 \end{frame}
 
+\note{
+}
+
 
 \section*{Introduction}
 
-% \begin{frame}{Executive Summary}
-%   \begin{itemize}
-%   \item TODO
-%   \end{itemize}
-% \end{frame}
+\begin{frame}{Executive Summary}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
 
-\begin{frame}{Task Description}
+\note{
+}
+
+\begin{frame}{Abstract}
   The goal of this project is to improve the efficiency of the
   Intervals scheduler and it consists of two parts:
 
@@ -106,231 +111,169 @@
   \end{enumerate}
 \end{frame}
 
+\note{ 
+  Intervals are a new, higher-level primitive for parallel
+  programming allowing programmers to directly construct the program
+  schedule. They are under active development at ETH Zürich as part of
+  the PhD research of Nicholas D. Matsakis.
 
-\section{Part 1: Work-stealing queue implementations}
+  The intervals implementation in Java uses a work-stealing scheduler
+  where a worker running out of work tries to steal work from
+  others. The scope of this thesis is to improve the performance of
+  the intervals scheduler.
 
-\begin{frame}{Outline}
-  \tableofcontents[current]
-\end{frame}
+  We implement and analyze an advanced scheduler for intervals. It is
+  designed for locality-aware scheduling using locality hints provided
+  by the programmer. Instead of employing work-stealing workers, our
+  scheduler groups workers into Work-Stealing Places. Each
+  work-stealing place has a fixed number of workers and a local deque
+  to maintain ready tasks. The workers of a place share its local
+  deque from which they obtain work. When a worker finds that the pool
+  of its place is empty, it tries to steal a task from the pool of a
+  victim place chosen at random. Locality-aware intervals are added to
+  their preferred place once they are ready for scheduling.
 
-\begin{frame}{Introduction}
-  \begin{itemize}
-  \item In a work-stealing scheduler, each worker keeps a pool of work
-    items waiting to be executed
-  \item The current Intervals implementation uses doubled-ended queues
-  \item The first part of the thesis will be to explore alternative
-    queue implementations and to compare them to the current
-    implementation
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{\lstinline!LazyDeque!}
-  \begin{itemize}
-  \item Original implementation
-  \item Uses \lstinline!AtomicReferenceArray! for tasks
-  \item Unbounded and almost lock-free (\lstinline!steal()! and
-    \lstinline!expand()! only allow one thief)
-  \item Owner of the deque only lazily updated the location of the
-    deque head, i.e. only when it tries to take something and finds it
-    gone
-  \end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{\lstinline!WorkStealingLazyDeque!}
-  \begin{itemize}
-  \item Based on \lstinline!LazyDeque!
-  \item \lstinline!LazyDeque! uses
-    \lstinline!tasks.getAndSet(index, null)! to get a queue element
-  \item \lstinline!AtomicReferenceArray!:
-\begin{lstlisting}[basicstyle=\fontsize{9}{11}\selectfont\ttfamily]
-public final E getAndSet(int i, E newValue) {
-  while (true) {
-    E current = get(i);
-    if (compareAndSet(i, current, newValue))
-      return current;
-  }
+  Providing locality hints to intervals is optional and the
+  performance of locality-ignorant programs executed with the new
+  scheduler implementation is comparable to that of the original
+  scheduler.  
 }
-\end{lstlisting}
-  \item Instead of using \lstinline!getAndSet!, this deque uses
-    \lstinline!get! and \lstinline!compareAndSet!
-  \end{itemize}
+
+\begin{frame}{Intervals}
+  TODO
 \end{frame}
 
-\begin{frame}{\lstinline!WorkStealingDeque!}
-  \begin{thebibliography}{10}
-    \beamertemplatearticlebibitems
-    
-  \bibitem{dynamic}
-    Chase, D.R., Lev, Yossi, {\em Dynamic circular work-stealing deque},
-    \url{http://portal.acm.org/citation.cfm?id=1073974}
-  \end{thebibliography}
+\note{
+}
 
-  \vspace{\stretch{1}}
-
-  \begin{itemize}
-  \item Unbounded work-stealing deque implementation
-  \item Uses cyclic non-atomic reference array for tasks
-  \item \lstinline!top! is an atomic integer
-  \item Lock-free, uses Compare-and-Swap
-  \end{itemize}
+\begin{frame}{Work-Stealing Scheduler}
+  TODO
 \end{frame}
 
-\begin{frame}{\lstinline!DuplicatingWorkStealingDeque!}
-  \begin{thebibliography}{10}
-    \beamertemplatearticlebibitems
-    
-  \bibitem{duplicating}
-    Leijen, D, et al., {\em The design of a task parallel library},
-    \url{http://portal.acm.org/citation.cfm?id=1640106&amp;dl=ACM}
-  \end{thebibliography}
-
-  \vspace{\stretch{1}}
-
-  \begin{itemize}
-  \item Uses cyclic non-atomic reference array for tasks
-  \item Potentially returns a pushed element more than once:
-    \begin{itemize}
-    \item[$\rightarrow$] \lstinline!put! and \lstinline!steal! behave
-      like normal, but \lstinline!take! is allowed to either take an
-      element (and remove it from the queue), or just duplicate an
-      element in the queue
-    \end{itemize}
-  \item Each task is associated with a state
-    \begin{itemize}
-    \item [$\rightarrow$] \lstinline!Init!, \lstinline!Running! or
-      \lstinline!Done!
-    \end{itemize}
-  \item When executing a task, we first check whether it has been run
-    already
-  \item \lstinline!steal()! and \lstinline!expand()! synchronized,
-    \lstinline!take()! is synchronized if there's only one item in the
-    queue
-  \item Variation: eager execution instead of queue expansion
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{\lstinline!IdempotentWorkStealingDeque!}
-  \begin{thebibliography}{10}
-    \beamertemplatearticlebibitems
-    
-  \bibitem{idempotent}
-    Michael, M.M., et al., {\em Idempotent work stealing},
-    \url{http://portal.acm.org/citation.cfm?id=1594835.1504186}
-  \end{thebibliography}
-
-  \vspace{\stretch{1}}  
-
-  \begin{itemize}
-  \item Same basic idea as \lstinline!DuplicatingWorkStealingDeque!
-  \item Uses cyclic non-atomic reference array for tasks
-  \item Lock-free
-  \item Three implementations: \lstinline!FIFOQueue!,
-    \lstinline!LIFOQueue!, \lstinline!Deque!
-  \item \lstinline!Deque! performs the best
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{\lstinline!DynamicWorkStealingDeque!}
-  \begin{thebibliography}{10}
-    \beamertemplatearticlebibitems
-    
-  \bibitem{idempotent}
-    Hendler, Danny, et al., {\em A dynamic-sized nonblocking work stealing deque},
-    \url{http://www.springerlink.com/index/Y7HQ174L92170355.pdf}
-  \end{thebibliography}
-
-  \vspace{\stretch{1}}  
-
-  \begin{itemize}
-  \item Uses linked array nodes for tasks
-  \item Lock-free implementation
-  \item Usually slower than the other work-stealing queue implementations
-    \begin{itemize}
-    \item[$\rightarrow$] Implementation is quite complex
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Results}
-  \begin{itemize}
-  \item Biggest bottleneck: Local FIFO queue for pending work (try to
-    get rid of it)
-  \item Idempotent/duplicating queues are almost as fast as other
-    queue implementations
-    \begin{itemize}
-    \item[$\rightarrow$] might use them in the second part
-    \end{itemize}
-  \item Original implementation was very good already
-    \begin{itemize}
-    \item[$\rightarrow$] small improvement by using \lstinline!get!
-      and \lstinline!compareAndSet! instead of \lstinline!getAndSet!
-    \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Results: Cache-misses}
-  \begin{itemize}
-  \item Work-stealing scheduler: More L1 cache misses than threads
-    implementation
-    \begin{itemize}
-    \item[$\rightarrow$] but fewer L2 cache misses
-    \end{itemize}
-  \item Work-stealing scheduler: L1 and L2 cache miss ratio is very
-    low
-    \begin{itemize}
-    \item[$\rightarrow$] besides an increase in cache misses, there's
-      also an increase in cache references (array index check)
-    \end{itemize}
-  \end{itemize}  
-\end{frame}
+\note{
+}
 
 
-\section{Part 2: Locality-aware work-stealing}
+\section{Locality-Aware Intervals Scheduling}
 
 \begin{frame}{Outline}
   \tableofcontents[current]
 \end{frame}
 
-\begin{frame}{Introduction}
+\note{
+}
+
+\begin{frame}{TODO}
+  TODO
+\end{frame}
+
+\note{
+}
+
+
+\section{Approach}
+
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{TODO}
+  TODO
+\end{frame}
+
+\note{
+}
+
+
+\section{Implementation}
+
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{TODO}
+  TODO
+\end{frame}
+
+\note{
+}
+
+
+\section{Performance Evaluation}
+
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{TODO}
+  TODO
+\end{frame}
+
+\note{
+}
+
+
+\section{Related Work}
+
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{TODO}
+  TODO
+\end{frame}
+
+\note{
+}
+
+
+\section{Conclusions and Future Work}
+
+\begin{frame}{Outline}
+  \tableofcontents[current]
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{TODO}
+  TODO
+\end{frame}
+
+\note{
+}
+
+
+\section*{Outro}
+
+\begin{frame}{Summary}
   \begin{itemize}
-  \item Intervals scheduler randomly schedules work items
-  \item When stealing a work item, the worker chooses his victim by
-    ``random''
-  \item To improve performance and reduce cache misses, work items
-    that access the same data should be scheduled on the same worker
-    or a worker ``nearby''
-  \item In locality-aware work-stealing, each work item can be given
-    an affinity for a worker, and when a worker obtains a work item it
-    gives priority to the work items with affinity to it
+  \item TODO
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Literature Review}
-  \begin{itemize}
-  \item Blumofe et al.: Locality-guided work stealing (initial
-    placement)
-    \begin{itemize}
-    \item[$\rightarrow$] each process maintains a mailbox: FIFO queue
-      of pointers to threads that have affinity for the process
-    \end{itemize}
-  \item SLAW scheduler (Habanero Java): Same idea as Blumofe
-  \item X10: Places to partition the global address space
-  \item Mely: Locality-aware stealing heuristics
-    \begin{itemize}
-    \item[$\rightarrow$] aims at improving cache usage by minimizing
-      the costs of cache misses
-    \item[$\rightarrow$] orders cores by their ``distance'' from the
-      stealing core
-    \end{itemize}
-  \end{itemize}
+\note{
+}
+
+\begin{frame}
+  \begin{center}
+    \huge Questions?
+  \end{center}
 \end{frame}
 
-% \section*{Outro}
-
-% \begin{frame}{Summary}
-%   \begin{itemize}
-%   \item TODO
-%   \end{itemize}
-% \end{frame}
+\note{
+}
 
 \end{document}
