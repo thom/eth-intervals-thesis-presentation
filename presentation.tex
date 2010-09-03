@@ -138,45 +138,73 @@
 }
 
 \begin{frame}{Intervals}
-  TODO
+  \begin{itemize}
+  \item Intervals are a new, higher-level primitive for multi-threaded
+    programming allowing programmers to directly construct the program
+    schedule. They are under active development at ETH Zürich as part
+    of the PhD research of Nicholas D. Matsakis.
+  \item The intervals implementation in Java uses a work-stealing
+    scheduler where a worker running out of work tries to steal work
+    from others. The scope of this thesis is to improve the
+    performance of the intervals scheduler.
+  \item Traditional primitives for synchronizing multi-threaded
+    programs, such as semaphores and barriers, are low-level and
+    dangerous to use. They are prone to errors, especially deadlocks
+    and race conditions, and require careful attention to
+    implementation details to achieve good performance.
+  \item Intervals are a higher-level alternative that make parallel
+    programming more secure while maintaining the flexibility and
+    efficiency of threads. When using intervals, programmers create
+    lightweight tasks and order them using \emph{happens before}
+    relations. Programmers need not specify when tasks should block or
+    acquire a lock. Instead they define when a task should execute in
+    relation to other tasks, and what locks it should hold during
+    execution. It is the duty of the runtime system to make this
+    schedule pass.
+  \item The intervals API supports arbitrary \emph{happens before}
+    relations making the model very flexible. Intervals can be used to
+    emulate existing thread primitives, but they can also be used to
+    create program schedules for which no standard primitives exist,
+    for example peer-to-peer synchronization.
+  \item Intervals can be extended to support both runtime and static
+    checks for errors like data race protection and deadlocks. An
+    error in one task prevents other, dependent tasks from executing.
+  \end{itemize}
 \end{frame}
 
 \note{
-  Intervals are a new, higher-level primitive for multi-threaded
-  programming allowing programmers to directly construct the program
-  schedule. They are under active development at ETH Zürich as part of
-  the PhD research of Nicholas D. Matsakis.
-
-  The intervals implementation in Java uses a work-stealing scheduler
-  where a worker running out of work tries to steal work from
-  others. The scope of this thesis is to improve the performance of
-  the intervals scheduler.
-
-  Traditional primitives for synchronizing multi-threaded programs,
-  such as semaphores and barriers, are low-level and dangerous to
-  use. They are prone to errors, especially deadlocks and race
-  conditions, and require careful attention to implementation details
-  to achieve good performance.
-
-  Intervals are a higher-level alternative that make parallel
-  programming more secure while maintaining the flexibility and
-  efficiency of threads. When using intervals, programmers create
-  lightweight tasks and order them using \emph{happens before}
-  relations. Programmers need not specify when tasks should block or
-  acquire a lock. Instead they define when a task should execute in
-  relation to other tasks, and what locks it should hold during
-  execution. It is the duty of the runtime system to make this
-  schedule pass.
-
-  The intervals API supports arbitrary \emph{happens before} relations
-  making the model very flexible. Intervals can be used to emulate
-  existing thread primitives, but they can also be used to create
-  program schedules for which no standard primitives exist, for
-  example peer-to-peer synchronization.
-
-  Intervals can be extended to support both runtime and static checks
-  for errors like data race protection and deadlocks. An error in one
-  task prevents other, dependent tasks from executing.
+  \begin{itemize}
+  \item Intervals are a new, higher-level primitive for multi-threaded
+    programming allowing programmers to directly construct the program
+    schedule. They are under active development at ETH Zürich as part
+    of the PhD research of Nicholas D. Matsakis.
+  \item The intervals implementation in Java uses a work-stealing
+    scheduler where a worker running out of work tries to steal work
+    from others. The scope of this thesis is to improve the
+    performance of the intervals scheduler.
+  \item Traditional primitives for synchronizing multi-threaded
+    programs, such as semaphores and barriers, are low-level and
+    dangerous to use. They are prone to errors, especially deadlocks
+    and race conditions, and require careful attention to
+    implementation details to achieve good performance.
+  \item Intervals are a higher-level alternative that make parallel
+    programming more secure while maintaining the flexibility and
+    efficiency of threads. When using intervals, programmers create
+    lightweight tasks and order them using \emph{happens before}
+    relations. Programmers need not specify when tasks should block or
+    acquire a lock. Instead they define when a task should execute in
+    relation to other tasks, and what locks it should hold during
+    execution. It is the duty of the runtime system to make this
+    schedule pass.
+  \item The intervals API supports arbitrary \emph{happens before}
+    relations making the model very flexible. Intervals can be used to
+    emulate existing thread primitives, but they can also be used to
+    create program schedules for which no standard primitives exist,
+    for example peer-to-peer synchronization.
+  \item Intervals can be extended to support both runtime and static
+    checks for errors like data race protection and deadlocks. An
+    error in one task prevents other, dependent tasks from executing.
+  \end{itemize}
 }
 
 \begin{frame}{Work-Stealing Scheduler}
@@ -407,16 +435,41 @@
 
 \section{Appendix}
 
-\subsection{TODO}
+\subsection{Work-Stealing Queue Implementations}
 
-\begin{frame}{TODO}
-  TODO
+\begin{frame}{Introduction}
+  \begin{itemize}
+  \item The performance of work-stealing schedulers is in a large part
+    determined by the efficiency of their work queue
+    implementations. In the non-blocking work-stealing scheduler, the
+    queues are implemented with non-blocking synchronization. That is,
+    instead of using mutual exclusion, it uses atomic synchronization
+    primitives such as Compare-and-Swap. The current work-stealing
+    queue of intervals however uses mutual exclusion when trying to
+    steal. Thus, as a separate effort, we design and explore
+    alternative non-blocking queue implementations with the aim to
+    improve work-stealing performance.
+  \end{itemize}
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item The performance of work-stealing schedulers is in a large part
+    determined by the efficiency of their work queue
+    implementations. In the non-blocking work-stealing scheduler, the
+    queues are implemented with non-blocking synchronization. That is,
+    instead of using mutual exclusion, it uses atomic synchronization
+    primitives such as Compare-and-Swap. The current work-stealing
+    queue of intervals however uses mutual exclusion when trying to
+    steal. Thus, as a separate effort, we design and explore
+    alternative non-blocking queue implementations with the aim to
+    improve work-stealing performance.
+  \end{itemize}
 }
 
-\begin{frame}{References}
+\subsection{Bibliography}
+
+\begin{frame}
   TODO
 
   \begin{thebibliography}{10}
