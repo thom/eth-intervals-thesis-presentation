@@ -19,6 +19,7 @@
 \usepackage{tabularx}
 \usepackage{alltt}
 \usepackage{wasysym}
+\usepackage{numprint}
 
 % Use default Acrobat reader fonts
 \usepackage{mathpazo}
@@ -47,8 +48,7 @@
   pdftitle={\Title, \Subtitle},
   pdfauthor={\Author},
   pdfsubject={\Institute},
-  pdfkeywords={Master's Thesis, Thomas Weibel,
-    Intervals, Parallel Programming}
+  pdfkeywords={Master's Thesis, Thomas Weibel, Intervals, Parallel Programming}
 }
 
 % Titlepage
@@ -255,9 +255,142 @@
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item Before starting with the implementation of the new scheduler,
+    we implement a synthetic multi-threaded locality-aware benchmark
+    called \emph{Cache Stress Test}.
+  \item This benchmark serves as a proof of concept for our plan to
+    introduce locality-aware intervals:
+    \begin{itemize}
+    \item If a multi-threaded benchmark with best possible locality
+      has better performance and fewer last-level cache misses than
+      the same benchmark with another or no specific locality, we
+      should be able to see the same effect when porting the benchmark
+      to a locality-aware implementation of intervals.  
+    \item Hence, we know whether it makes sense to design a
+      locality-aware intervals scheduler.
+    \end{itemize}
+  \end{itemize}
 }
 
-\begin{frame}{TODO}
+\begin{frame}{Cache Stress Test}
+  \begin{itemize}
+  \item We wrote our benchmark for the Intel Nehalem system. The
+    system has 2 processors with 4 cores each. Every core has its
+    separate level 1 and 2 caches, but the per-processor 8 MB level 3
+    cache is shared between all cores of the same processor.
+  \item \emph{Cache Stress Test} first randomly initializes two
+    integer arrays of size \numprint{2097144}, i.e. the size of each
+    array is about 8 MB. This is equal to the size of the last level
+    cache per processor. Then the benchmark creates 8 \emph{Cache
+      Stress} threads per core with their affinity set to this
+    specific core. Overall, we create 64 threads, bound to the 8 cores
+    in groups of 8 threads. To bind threads to a specific core, we use
+    the affinity library introduced later.
+  \item One half of the threads operate on the elements of the first
+    array and the other half operate on the elements of the second
+    array. Each thread adds and multiplies all the elements of its
+    respective array 100 times.
+  \end{itemize}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item Before starting with the implementation of the new scheduler,
+    we implement a synthetic multi-threaded locality-aware benchmark
+    called \emph{Cache Stress Test}. This benchmark serves as a proof
+    of concept for our plan to introduce locality-aware intervals: If
+    a multi-threaded benchmark with best possible locality has better
+    performance and fewer last-level cache misses than the same
+    benchmark with another or no specific locality, we should be able
+    to see the same effect when porting the benchmark to a
+    locality-aware implementation of intervals. Hence, we know whether
+    it makes sense to design a locality-aware intervals scheduler.
+  \item We wrote our benchmark for the Intel Nehalem system. The
+    system has 2 processors with 4 cores each. Every core has its
+    separate level 1 and 2 caches, but the per-processor 8 MB level 3
+    cache is shared between all cores of the same processor.
+  \item \emph{Cache Stress Test} first randomly initializes two
+    integer arrays of size \numprint{2097144}, i.e. the size of each
+    array is about 8 MB. This is equal to the size of the last level
+    cache per processor. Then the benchmark creates 8 \emph{Cache
+      Stress} threads per core with their affinity set to this
+    specific core. Overall, we create 64 threads, bound to the 8 cores
+    in groups of 8 threads. To bind threads to a specific core, we use
+    the affinity library introduced later.
+  \item One half of the threads operate on the elements of the first
+    array and the other half operate on the elements of the second
+    array. Each thread adds and multiplies all the elements of its
+    respective array 100 times.
+  \end{itemize}
+}
+
+\begin{frame}{Locality}
+  We implement several different variants of the \emph{Cache Stress
+    Test}, each having different locality properties:
+
+  \begin{description}
+  \item[Best Locality:] All the threads working on the first array
+    have affinity for a core on the first processor and all threads
+    working on the second array have affinity for a core on the second
+    processor.
+  \item[Ignorant Locality:] The threads are not bound to any specific
+    core, i.e. they are \emph{ignorant} of their locality.
+  \item[Random Locality:] The affinity of the threads is set to a
+    \emph{random} core.
+  \item[Worst Locality:] Half the threads with affinity for a core on
+    the first processor work on the first array, and the other half
+    works on the second array and vice versa.
+  \end{description}
+\end{frame}
+
+\note{
+  We implement several different variants of the \emph{Cache Stress
+    Test}, each having different locality properties:
+
+  \begin{description}
+  \item[Best Locality:] All the threads working on the first array
+    have affinity for a core on the first processor and all threads
+    working on the second array have affinity for a core on the second
+    processor.
+  \item[Ignorant Locality:] The threads are not bound to any specific
+    core, i.e. they are \emph{ignorant} of their locality.
+  \item[Random Locality:] The affinity of the threads is set to a
+    \emph{random} core.
+  \item[Worst Locality:] Half the threads with affinity for a core on
+    the first processor work on the first array, and the other half
+    works on the second array and vice versa.
+  \end{description}
+}
+
+\begin{frame}{Best and Worst Locality}
+  \begin{columns}[c]
+    \begin{column}{0.50\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-best} \\
+        \tiny{Best Locality}     
+      \end{center}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-worst} \\
+        \tiny{Worst Locality}
+      \end{center}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Performance}
+  TODO
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Performance}
   TODO
 \end{frame}
 
@@ -390,34 +523,58 @@
   \end{itemize}
 }
 
+\begin{frame}{Conclusions}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Future Work}
+  \begin{itemize}
+  \item TODO
+  \end{itemize}
+\end{frame}
+
+\note{
+}
+
 \subsection{Bibliography}
 
 \begin{frame}
-  TODO
-
   \begin{thebibliography}{10}
     % Articles
     \beamertemplatearticlebibitems
 
-  \bibitem{zpl}
-    B. Chamberlain et al., {\em ZPL: A Machine Independent Language
-      for Parallel Computers},
-    \url{http://www.cs.washington.edu/research/zpl/papers/data/Chamberlain00ZPL.pdf}
-    
-  \bibitem{zpl-design}
-    B. Chamberlain, {\em The Design and Implementation of a
-      Region-Based Parallel Programming Language},
-    \url{http://www.cs.washington.edu/research/zpl/papers/data/Chamberlain01Design.pdf}
+  \bibitem{data-locality} Umut A. Acar et al. {\em``The data locality
+      of work stealing''}. 2000.
 
-  \bibitem{shared-memory}
-    L. Snyder, {\em Type Architecture, Shared Memory and the Corollary
-      of Modest Potential}, Ann. Review of Computer Science,
-    pp. I:289-318, 1986
+  \bibitem{ws-sched} Robert D. Blumofe and Charles
+    E. Leiserson. {\em``Scheduling multithreaded computations by work
+      stealing''}. 1999.
 
-  \bibitem{nas-mg-benchmark}
-    B. Chamberlain et al., {\em A Comparative Study of the NAS MG
-      Benchmark across Parallel Languages and Architectures},
-    \url{http://www.cs.washington.edu/research/zpl/papers/data/Chamberlain00.pdf}
+  \bibitem{cilk} Robert D. Blumofe et al. {\em``Cilk: an efficient
+      multithreaded runtime system''}. 1995.
+
+  \bibitem{slaw} Yi Guo et al. {\em``SLAW: a scalable locality-aware
+      adaptive work-stealing scheduler for multi-core
+      systems''}. 2010.
+
+  \bibitem{java-fork-join} Doug Lea. {\em``A Java fork/join
+      framework''}. 2000.
+
+  \bibitem{intervals} Nicholas D. Matsakis and Thomas
+    R. Gross. {\em``Programming with Intervals''}. 2009.
+
+  \bibitem{cache-locality} James Philbin et al. {\em``Thread
+      scheduling for cache locality''}. 1996.
+
+  \bibitem{cache-affinity} M. S. Squillante and
+    E. D. Lazowska. {\em``Using Processor-Cache Affinity Information
+      in Shared-Memory Multiprocessor Scheduling ``}. 1993.
+
   \end{thebibliography}
 \end{frame}
 
