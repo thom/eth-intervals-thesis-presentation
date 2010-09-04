@@ -458,7 +458,14 @@
 \note{
 }
 
-\begin{frame}{TODO}
+\begin{frame}{Conclusions}
+  TODO
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Future Work}
   TODO
 \end{frame}
 
@@ -491,56 +498,6 @@
 
 \section{Appendix}
 
-\subsection{Work-Stealing Queue Implementations}
-
-\begin{frame}{Introduction}
-  \begin{itemize}
-  \item The performance of work-stealing schedulers is in a large part
-    determined by the efficiency of their work queue
-    implementations. In the non-blocking work-stealing scheduler, the
-    queues are implemented with non-blocking synchronization. That is,
-    instead of using mutual exclusion, it uses atomic synchronization
-    primitives such as Compare-and-Swap. The current work-stealing
-    queue of intervals however uses mutual exclusion when trying to
-    steal. Thus, as a separate effort, we design and explore
-    alternative non-blocking queue implementations with the aim to
-    improve work-stealing performance.
-  \end{itemize}
-\end{frame}
-
-\note{
-  \begin{itemize}
-  \item The performance of work-stealing schedulers is in a large part
-    determined by the efficiency of their work queue
-    implementations. In the non-blocking work-stealing scheduler, the
-    queues are implemented with non-blocking synchronization. That is,
-    instead of using mutual exclusion, it uses atomic synchronization
-    primitives such as Compare-and-Swap. The current work-stealing
-    queue of intervals however uses mutual exclusion when trying to
-    steal. Thus, as a separate effort, we design and explore
-    alternative non-blocking queue implementations with the aim to
-    improve work-stealing performance.
-  \end{itemize}
-}
-
-\begin{frame}{Conclusions}
-  \begin{itemize}
-  \item TODO
-  \end{itemize}
-\end{frame}
-
-\note{
-}
-
-\begin{frame}{Future Work}
-  \begin{itemize}
-  \item TODO
-  \end{itemize}
-\end{frame}
-
-\note{
-}
-
 \subsection{Bibliography}
 
 \begin{frame}
@@ -568,18 +525,141 @@
   \bibitem{intervals} Nicholas D. Matsakis and Thomas
     R. Gross. {\em``Programming with Intervals''}. 2009.
 
-  \bibitem{cache-locality} James Philbin et al. {\em``Thread
-      scheduling for cache locality''}. 1996.
-
   \bibitem{cache-affinity} M. S. Squillante and
     E. D. Lazowska. {\em``Using Processor-Cache Affinity Information
       in Shared-Memory Multiprocessor Scheduling ``}. 1993.
+
+  \bibitem{cmp} Bratin Saha et al. {\em``Enabling scalability and
+      performance in a large scale CMP environment''}. 2007.
 
   \end{thebibliography}
 \end{frame}
 
 \note{
   Those are a few selected references I used in my work.
+}
+
+
+\subsection{Work-Stealing Queue Implementations}
+
+\begin{frame}{Alternative Work-Stealing Queues}
+  \begin{itemize}
+  \item Performance of work-stealing schedulers in large part
+    determined by the efficiency of the work queue
+  \item Non-blocking work-stealing scheduler queues employ atomic
+    synchronization primitives such as Compare-and-Swap instead of
+    using mutual exclusion
+  \item Current work-stealing queue of intervals uses mutual exclusion
+    when trying to steal
+  \end{itemize}
+
+  \vspace{\stretch{1}}
+
+  \begin{itemize}
+  \item[$\Rightarrow$] As a separate effort, we design and explore
+    alternative non-blocking queue implementations with the aim to
+    improve work-stealing performance
+  \end{itemize}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item The performance of work-stealing schedulers is in a large part
+    determined by the efficiency of their work queue
+    implementations.
+  \item In the non-blocking work-stealing scheduler, the
+    queues are implemented with non-blocking synchronization. That is,
+    instead of using mutual exclusion, it uses atomic synchronization
+    primitives such as Compare-and-Swap.
+  \item The current work-stealing queue of intervals however uses
+    mutual exclusion when trying to steal.
+  \item Thus, as a separate effort, we design and explore alternative
+    non-blocking queue implementations with the aim to improve
+    work-stealing performance.
+  \end{itemize}
+}
+
+\begin{frame}{Results}
+  \begin{itemize}
+  \item Hypothesis was that we could improve the performance of the
+    intervals scheduler with non-blocking work-stealing queues
+  \item Evaluated the performance of our queue implementations with
+    intervals implementations of various Java Grande Forum benchmarks
+  \item None of the alternative work-stealing queues significantly
+    improves performance on the machines we had to test
+  \end{itemize}
+
+  \vspace{\stretch{1}}
+
+  \begin{block}{Possible Reason}
+    There is no noticeable difference between the speedup of
+    work-stealing and a global shared work queue when not using more
+    than 8 cores
+  \end{block}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item Our hypothesis was that we could improve the performance of
+    the intervals scheduler with non-blocking work-stealing queues.
+  \item We evaluated the performance of our alternative queues by
+    using the intervals implementations of various Java Grande Forum
+    benchmarks.
+  \item None of the work-stealing queues we developed significantly
+    improves work-stealing performance on the machines we had to test
+    them with.
+  \item Apart from the more complex implementation in comparison to
+    the original \emph{Work-Stealing Deque}, a possible reason for
+    this could be the rather small number of cores of our benchmark
+    machines. We could not find any significant difference between the
+    runtimes of the Java Grande Forum benchmarks when using the
+    different implementations -- whether we use work-stealing or a
+    single shared work queue, we get almost the same results.
+  \end{itemize}
+}
+
+\begin{frame}{Future Work}
+  \begin{itemize}
+  \item Explore the performance of the different work-stealing queue
+    implementations on machines with more than 8 cores
+  \item See how our work-stealing queues would benefit from using the
+    steal-half algorithm of Hendler and Shavit
+  \item Prevent waste of memory by shrinking queues using arrays to
+    maintain work items again once they contain less items
+  \item Using a shared pool of arrays:
+    \begin{itemize}
+    \item When the queue needs a larger array, it allocates one of the
+      appropriate size from the pool
+    \item Whenever it shrinks to a smaller array and does not need the
+      larger array anymore, it can return it to the pool
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item Given the results of the performance evaluation, a direction
+    for future research would be to explore the performance of the
+    different work-stealing queue implementations on machines
+    featuring more than 8 cores.
+  \item It may also be interesting to see how our work-stealing queues
+    would benefit from using the steal-half algorithm of Hendler and
+    Shavit.
+  \item One disadvantage of the queues using arrays to maintain work
+    items is that they do not shrink them again once the queue
+    contains less work items which might lead to a waste of
+    memory. Chase and Lev present a way of shrinking an array without
+    copying by keeping the reference to the smaller array when
+    expanding. When the queue shrinks back its array to the previous
+    array, only the elements that were modified while the larger array
+    was active need to be copied.
+  \item Another optimization Chase and Lev mention is working with a
+    shared pool of arrays. With the shared pool implementation,
+    whenever the queue needs a larger array, it allocates one of the
+    appropriate size from the pool, and whenever it shrinks to a
+    smaller array and does not need the larger array anymore, it can
+    return it to the pool.
+  \end{itemize}
 }
 
 \end{document}
