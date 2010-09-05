@@ -332,9 +332,10 @@
   \end{columns}
 \end{frame}
 
-\note{ We implement several different variants of the \emph{Cache
-    Stress Test}, each having different locality properties. The
-  figure illustrates \emph{Best} and \emph{Worst Locality}:
+\note{
+  We implement several different variants of the \emph{Cache Stress
+    Test}, each having different locality properties. The figure
+  illustrates \emph{Best} and \emph{Worst Locality}:
 
   \begin{itemize}
   \item In the \emph{Best Locality} implementation all the threads
@@ -458,70 +459,99 @@
   \end{itemize}
 }
 
-\subsection{API}
+\subsection{Locality-Aware Intervals}
 
-\begin{frame}{Locality-Aware Intervals API}
-  TODO
+\begin{frame}[fragile]{Locality-Aware Intervals API}
+  \begin{itemize}
+  \item Intervals are subtypes of abstract class \lstinline!Interval!
+  \item Specify the interval's locality when creating it
+  \item Locality hints provided in the form of \lstinline!PlaceID!
+    objects
+    \begin{itemize}
+    \item[$\rightarrow$] Assign the interval to the specified place
+    \end{itemize}
+  \item If \lstinline!PlaceID! is null, the interval is ignorant of
+    its place    
+    \begin{itemize}
+    \item[$\rightarrow$] Assign the interval to a place in a
+      round-robin fashion
+    \end{itemize}
+  \end{itemize}
+
+  \vspace{\stretch{1}}
+
+\begin{lstlisting}[basicstyle=\fontsize{8}{10}\selectfont\ttfamily]
+  public abstract class Interval extends WorkItem {	
+    public final PlaceID place;
+
+    public Interval(Dependency dep, String name, PlaceID place) {
+      this.place = place;  
+      // ...
+    }
+    
+    // ...
+  }\end{lstlisting}
 \end{frame}
 
 \note{
-Intervals are represented as subtypes of the abstract class
-\lstinline!Interval!. To make an interval locality-aware, the
-programmer has to specify the interval's locality when creating it. We
-extend the abstract \lstinline!Interval! class to support locality
-hints:
-
-% \lstinputlisting[style=Skip, 
-%   caption={Locality-aware \lstinline!Interval! class},
-%   label=lst:locality-implementation-interval]{
-%     ../listings/locality-implementation/Interval.java
-% }
-
-Locality hints are provided in the form of \lstinline!PlaceID!
-objects. They specify which place the interval should be executed
-on. If the interval should be ignorant of its place, the programmer
-can provide \lstinline!null! when creating it. This makes the
-scheduler to assign the interval to a place in a round-robin fashion.
-
-The \lstinline!PlaceID! class encapsulates an integer ID and name. We
-are using a class for the place ID instead of an integer due to type
-safety.
-
-The number of places is fixed at the time an intervals program is
-launched: There is no construct to create a new place and we do not
-want programmers to create their own place IDs. Thus, the
-\lstinline!PlaceID!  class is abstract and programmers have to use the
-\lstinline!Config! class to get a \lstinline!PlaceID!  object.
-
-% \lstinputlisting[style=Float, 
-%   caption={\lstinline!PlaceID! class},
-%   label=lst:locality-implementation-place-id]{
-%     ../listings/locality-implementation/PlaceID.java
-% }
-
-We introduce the \lstinline!Config! class to simplify switching to
-another machine as the current scheduler implementation cannot
-discover places automatically. \lstinline!Config! features an instance
-of the \lstinline!Places! class. Programmers can use it to get place
-IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
-
-% \lstinputlisting[style=Float, 
-%   caption={\lstinline!Config! class},
-%   label=lst:locality-implementation-config]{
-%     ../listings/locality-implementation/Config.java
-% }
+  \begin{itemize}
+  \item Intervals are represented as subtypes of the abstract class
+    \lstinline!Interval!.
+  \item To make an interval locality-aware, the programmer has to
+    specify the interval's locality when creating it. We extend the
+    abstract \lstinline!Interval! class to support locality hints.
+  \item Locality hints are provided in the form of \lstinline!PlaceID!
+    objects. They specify which place the interval should be executed
+    on.
+  \item If the interval should be ignorant of its place, the
+    programmer can provide \lstinline!null! when creating it. This
+    makes the scheduler to assign the interval to a place in a
+    round-robin fashion.
+  \end{itemize}
 }
 
 \subsection{Work-Stealing Places}
 
 \begin{frame}{Work-Stealing Places}
-  TODO
+  \begin{itemize}
+  \item Work-stealing scheduler has fixed number of worker threads
+  \item Traditional work-stealing scheduler designs: Every worker has
+    local deque to maintain own pool of ready tasks
+  \item LASSI uses \emph{Work-Stealing Places} instead:
+    \begin{itemize}
+    \item Each place has a fixed number of workers and a local deque
+      to maintain ready tasks
+    \item Workers of a place share its local deque
+    \item When the pool of a place is empty, its workers tries to
+      steal a task from the pool of a victim place chosen at random
+    \end{itemize}
+  \item Number of places fixed at the launch of an intervals program
+  \end{itemize}
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item A work-stealing scheduler employs a fixed number of threads
+    called workers.
+  \item In traditional work-stealing scheduler designs, every worker
+    has a local double-ended queue, or deque, to maintain its own pool
+    of ready tasks from which it obtains work.
+  \item LASSI uses \emph{Work-Stealing Places} instead:
+    \begin{itemize}
+    \item Each work-stealing place has a fixed number of workers and a
+      local deque to maintain ready tasks.
+    \item The workers of a place share its local deque from which they
+      obtain work.
+    \item When a worker finds that the pool of its place is empty, it
+      tries to steal a task from the pool of a victim place chosen at
+      random.
+    \end{itemize}
+  \item The number of places is fixed at the time an intervals program
+    is launched: There is no construct to create a new place
+  \end{itemize}
 }
 
-\begin{frame}{Work-Stealing Places}
+\begin{frame}{Intel Nehalem in Two-Processor Configuration}
   \begin{center}
     \includegraphics[width=0.93\textwidth]{figures/places} \\
     \tiny{\emph{Work-Stealing Places} used in our Intel Nehalem
@@ -530,20 +560,86 @@ IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item The figure shows the work-stealing places used on our Intel
+    Nehalem testing machine.
+  \item Places are virtual: The mapping of physical units to places is
+    performed by a concrete implementation of the abstract
+    \lstinline!Places! class.
+  \item For our test machine we define a place for each processor:
+    Place 0 consists of the physical units 0, 2, 4, and 6 and the
+    physical units 1, 3, 5, and 7 form place 1.
+  \end{itemize}
 }
 
-\begin{frame}{Worker Threads}
+\begin{frame}{Alternative Designs}
   TODO
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item Other locality-aware work-stealing schedulers use a more
+    complex design. Acar et al. for example provide each worker with a
+    mailbox in addition to the work-stealing deque: ``A mailbox is a
+    FIFO queue of pointers to work items that have affinity for the
+    worker. So when creating a work item, a worker will push it onto
+    both the deque, as in normal work-stealing, and also onto the tail
+    of the mailbox of the worker that the interval has affinity
+    for. Now a worker will first try to obtain work from its mailbox
+    before attempting to steal. Because work items can appear twice,
+    once in a mailbox and once in a deque, they have to be
+    idempotent.''
+  \item However, we have decided to simplify our scheduler
+    implementation by using a shared deque per \emph{Work-Stealing
+      Place}. We believe that this would not impact scalability as
+    long as the places are not too large. We could show that up to 8
+    workers there is no significant difference between using a
+    separate deque for each worker or a shared deque per place.
+  \end{itemize}
 }
 
-\begin{frame}{Scheduling Policy}
-  TODO
+\begin{frame}{Setting Core Affinity of Worker Threads}
+  \begin{columns}[c]
+    \begin{column}{0.65\textwidth}
+      \begin{itemize}
+      \item TODO
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.35\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/java-threads} \\
+        \tiny{Linux 1-to-1 thread mapping}
+      \end{center}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item In recent Java Virtual Machines, threads are implemented with
+    native threads. A Java program using threads is no different from
+    a native program using threads, i.e. a Java thread is just a
+    native thread belonging to a JVM process. This means there is a
+    1-to-1 correspondence between Java and native threads. When using
+    the GNU C library on Linux, native threads are implemented with
+    the NPTL (Native POSIX Threads Library). NPTL is also a 1-to-1
+    implementation, meaning that each thread maps to a kernel
+    scheduling entity.
+  \item Unfortunately the Java Threads API does not expose the ability
+    to set the CPU or core affinity despite numerous use cases where
+    setting the affinity of threads would be beneficial -- such as
+    improving cache and network performance or real-time
+    applications. There exists a request for enhancement on this issue
+    but it was set to the state \emph{``Closed, Will Not Fix''}.
+  \item To bind the workers to a specific core, we wrote a small JNI
+    library:
+    \begin{itemize}
+    \item With \lstinline!pthread_self()! we get the native thread
+      ID.
+    \item \lstinline!pthread_setaffinity_np()! sets the core affinity
+      of the worker thread.
+    \end{itemize}
+  \end{itemize}
 }
 
 \begin{frame}{Restrictions}
@@ -551,6 +647,40 @@ IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item Portability:
+    \begin{itemize}
+    \item As we are directly using functions provided by POSIX
+      threads, our implementation is not portable across operating
+      systems that do not support the POSIX standard. To make our
+      library portable, it could be rewritten using \emph{Portable
+        Linux Processor Affinity (PLPA)} or \emph{Portable Hardware
+        Locality (hwloc)}.
+    \end{itemize}
+  \item Data Locality:
+    \begin{itemize}
+    \item By setting the core affinity of threads, we only control the
+      locality of the work but we do not have control over data
+      locality.
+    \item In a NUMA system every node has a direct connection to local
+      memory providing fast access, and an indirect connection to
+      remote memory with slower access. In the Intel Nehalem system
+      for example, local DRAM access takes $\sim 60$ ns, while remote
+      DRAM access takes $\sim 100$ ns.
+    \item In the Java HotSpot VM, the NUMA-aware allocator has been
+      implemented to provide automatic memory placement optimizations
+      for Java applications: ``The allocator controls the eden space
+      of the young generation of the heap, where most of the new
+      objects are created. It divides the space into regions each of
+      which is placed in the memory of a specific node. The allocator
+      relies on a hypothesis that a thread that allocates the object
+      will be the most likely to use the object. To ensure the fastest
+      access to the new object, the allocator places it in the region
+      local to the allocating thread.''
+    \item To enable the NUMA-aware allocator, we invoke the JVM with
+      the parameter \lstinline!-XX:+UseNUMA! when using LASSI.
+    \end{itemize}
+  \end{itemize}
 }
 
 
@@ -561,6 +691,7 @@ IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
 \end{frame}
 
 \note{
+  TODO
 }
 
 \begin{frame}{TODO}
@@ -568,6 +699,7 @@ IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
 \end{frame}
 
 \note{
+  TODO
 }
 
 
@@ -578,6 +710,7 @@ IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
 \end{frame}
 
 \note{
+  TODO
 }
 
 \begin{frame}{Conclusions}
@@ -682,6 +815,7 @@ IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
 \end{frame}
 
 \note{
+  TODO
 }
 
 
