@@ -432,23 +432,6 @@
 }
 
 
-\section{Related Work}
-
-\begin{frame}{Outline}
-  \tableofcontents[current]
-\end{frame}
-
-\note{
-}
-
-\begin{frame}{TODO}
-  TODO
-\end{frame}
-
-\note{
-}
-
-
 \section{Conclusions and Future Work}
 
 \begin{frame}{Outline}
@@ -459,30 +442,99 @@
 }
 
 \begin{frame}{Conclusions}
-  TODO
-\end{frame}
-
-\note{
-}
-
-\begin{frame}{Future Work}
-  TODO
-\end{frame}
-
-\note{
-}
-
-
-\section*{Outro}
-
-\begin{frame}{Summary}
   \begin{itemize}
-  \item TODO
+  \item Introduced LASSI, a locality-aware scheduler for intervals
+    using locality hints provided by the programmer
+  \item \emph{Work-Stealing Places} to support locality-awareness
+  \item Performance of existing locality-ignorant programs comparable
+    to the original scheduler implementation
+  \item Scheduling data sharing intervals on the same processor:
+    \begin{itemize}
+    \item[$\rightarrow$] Prefetching of shared regions for one another
+    \item[$\rightarrow$] Up to $1.15\times$ speedup over
+      \emph{ignorant locality} placement
+    \item[$\rightarrow$] Cache hits increased by up to $1.5\times$ and
+      cache misses reduced by up to $3.1\times$
+    \end{itemize}
+  \item Benchmarks do not test scheduling non-communicating intervals
+    with high memory footprints on different processors
+  \item Difficult to write benchmarks exploiting the memory hierarchy
+    of NUMA systems
   \end{itemize}
 \end{frame}
 
 \note{
+  \begin{itemize}
+  \item In this thesis, we introduced LASSI, a locality-aware
+    scheduler for intervals using locality hints provided by the
+    programmer.
+  \item Instead of employing work-stealing workers, LASSI uses
+    \emph{Work-Stealing Places} to provide locality-awareness.
+  \item The performance of existing locality-ignorant programs run
+    with LASSI is comparable to the original scheduler implementation.
+  \item By scheduling data sharing intervals on the same processor
+    they perform prefetching of shared regions for one another which
+    improves performance. Our experimental results show that
+    \emph{best locality} placement of intervals can achieve up to 15
+    percent speedup over locality-ignorance. Cache hits can be
+    increased by up to 50 percent and cache misses can be reduced by
+    up to 310 percent.
+  \item Our benchmarks do not test how scheduling non-communicating
+    intervals with high memory footprints on different processors
+    helps to reduce cache contention and potential cache capacity
+    problems.
+  \item In general, it is not easy to write benchmarks exploiting the
+    memory hierarchy of NUMA systems. Many benchmarks mentioned in the
+    literature do not show the desired effects anymore due to advances
+    in hardware and software.
+  \end{itemize}
 }
+
+\begin{frame}{Future Work}
+  \begin{itemize}
+  \item Improve API of \emph{Work-Stealing Places} and locality-aware
+    intervals
+  \item Make underlying machine transparent to the user
+  \item Extend \emph{Work-Stealing Places} to co-locate tasks and
+    data
+  \item Avoid counter-productive steals when load balancing across
+    work-stealing places
+  \item Online contention detection to dynamically reduce or increase
+    the number of worker threads depending on the system load
+  \item Explore \emph{Parallel Depth-First Scheduling} as a possible
+    replacement for \emph{Work-Stealing Scheduling} in intervals
+  \end{itemize}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item A possible area of future work would be to improve the API of
+    \emph{Work-Stealing Places} and locality-aware intervals.
+  \item Places have to be manually configured for each system. This
+    should be automated by making the hardware transparent to the
+    user.
+  \item LASSI depends on the heuristics of the NUMA-aware allocator
+    implemented in Java HotSpot VM to provide automatic memory
+    placement optimizations. Further research could be done in
+    extending \emph{Work-Stealing Places} to co-locate tasks and data.
+  \item Load balancing across work-stealing places can lead to
+    counter-productive stealing. Future work should avoid such steals.
+  \item Worker threads share their assigned core with other processes
+    in the system. Online contention detection could be used to
+    dynamically reduce or increase the number of worker threads.
+  \item Another possible direction for future research would be to
+    explore \emph{Parallel Depth-First Scheduling} as a possible
+    replacement for \emph{Work-Stealing Scheduling} in intervals. In
+    PDF scheduling, tasks are assigned priorities in the same ordering
+    they would be executed in a sequential program. As a result, PDF
+    scheduling tends to employ constructive cache sharing as it
+    co-schedules threads in a way that simulates the sequential
+    execution order.
+  \end{itemize}
+}
+
+
+\section*{Outro}
 
 \begin{frame}
   \begin{center}
