@@ -458,7 +458,95 @@
   \end{itemize}
 }
 
-\begin{frame}{TODO}
+\subsection{API}
+
+\begin{frame}{Locality-Aware Intervals API}
+  TODO
+\end{frame}
+
+\note{
+Intervals are represented as subtypes of the abstract class
+\lstinline!Interval!. To make an interval locality-aware, the
+programmer has to specify the interval's locality when creating it. We
+extend the abstract \lstinline!Interval! class to support locality
+hints:
+
+% \lstinputlisting[style=Skip, 
+%   caption={Locality-aware \lstinline!Interval! class},
+%   label=lst:locality-implementation-interval]{
+%     ../listings/locality-implementation/Interval.java
+% }
+
+Locality hints are provided in the form of \lstinline!PlaceID!
+objects. They specify which place the interval should be executed
+on. If the interval should be ignorant of its place, the programmer
+can provide \lstinline!null! when creating it. This makes the
+scheduler to assign the interval to a place in a round-robin fashion.
+
+The \lstinline!PlaceID! class encapsulates an integer ID and name. We
+are using a class for the place ID instead of an integer due to type
+safety.
+
+The number of places is fixed at the time an intervals program is
+launched: There is no construct to create a new place and we do not
+want programmers to create their own place IDs. Thus, the
+\lstinline!PlaceID!  class is abstract and programmers have to use the
+\lstinline!Config! class to get a \lstinline!PlaceID!  object.
+
+% \lstinputlisting[style=Float, 
+%   caption={\lstinline!PlaceID! class},
+%   label=lst:locality-implementation-place-id]{
+%     ../listings/locality-implementation/PlaceID.java
+% }
+
+We introduce the \lstinline!Config! class to simplify switching to
+another machine as the current scheduler implementation cannot
+discover places automatically. \lstinline!Config! features an instance
+of the \lstinline!Places! class. Programmers can use it to get place
+IDs, e.g. \lstinline!Config.places.getPlaceID(0)!.
+
+% \lstinputlisting[style=Float, 
+%   caption={\lstinline!Config! class},
+%   label=lst:locality-implementation-config]{
+%     ../listings/locality-implementation/Config.java
+% }
+}
+
+\subsection{Work-Stealing Places}
+
+\begin{frame}{Work-Stealing Places}
+  TODO
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Work-Stealing Places}
+  \begin{center}
+    \includegraphics[width=0.93\textwidth]{figures/places} \\
+    \tiny{\emph{Work-Stealing Places} used in our Intel Nehalem
+      testing machine}
+  \end{center}
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Worker Threads}
+  TODO
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Scheduling Policy}
+  TODO
+\end{frame}
+
+\note{
+}
+
+\begin{frame}{Restrictions}
   TODO
 \end{frame}
 
