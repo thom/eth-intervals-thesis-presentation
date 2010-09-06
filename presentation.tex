@@ -88,19 +88,8 @@
   \begin{itemize}
   \item Hi and welcome to my talk.
   \item I'm going to present the work from my Master's thesis. The
-    topic of my thesis was ``Advanced Scheduling for Intervals''.
+    topic was ``Advanced Scheduling for Intervals''.
   \end{itemize}
-
-  Backup: Intervals are a new, higher-level primitive for
-  multi-threaded programming allowing programmers to directly
-  construct the program schedule. When using intervals, programmers
-  create lightweight tasks and order them using \emph{happens before}
-  relations. Programmers need not specify when tasks should block or
-  acquire a lock. Instead they define when a task should execute in
-  relation to other tasks, and what locks it should hold during
-  execution. It is the duty of the runtime system to make this
-  schedule pass. They are under active development at ETH Zürich as
-  part of the PhD research of Niko.
 }
 
 
@@ -116,43 +105,40 @@
   \item Providing locality hints to intervals is optional
     \begin{itemize}
     \item[$\rightarrow$] Performance of locality-ignorant programs
-      executed with the new scheduler implementation is comparable to
-      the original scheduler
+      executed with new scheduler implementation comparable to
+      original scheduler
     \end{itemize}
   \item Locality hints improve runtime and cache hit and miss rates
     \begin{itemize}
     \item[$\rightarrow$] \emph{Best locality} placement achieves up to
-      $1.15\times$ speedup over \emph{worst} or \emph{ignorant
-        locality} placement
-    \item[$\rightarrow$] Cache hits are increased by up to $1.5\times$
-      and cache misses are reduced by up to $3.1\times$
+      $1.15\times$ speedup
+    \item[$\rightarrow$] Cache hits increase by $1.5\times$ and cache
+      misses decrease by $3.1\times$
     \end{itemize}
   \end{itemize}
 \end{frame}
 
 \note{ 
   \begin{itemize}
-  \item In my thesis we implemented and analyzed an advanced scheduler
-    for intervals which is designed for locality-aware scheduling
-    using locality hints provided by the programmer.
-  \item Providing locality hints to intervals is optional and the
-    performance of locality-ignorant programs executed with the new
-    scheduler implementation is comparable to that of the original
-    scheduler.
+  \item We implement and analyze an advanced scheduler for intervals
+    which is designed for locality-aware scheduling using locality
+    hints provided by the programmer.
+  \item Providing locality hints is optional and the performance of
+    locality-ignorant programs executed with the new scheduler
+    implementation is comparable to that of the original scheduler.
   \item We studied the performance of our new scheduler implementation
-    with benchmarks using data sharing intervals. Our experimental
+    with benchmarks using data sharing intervals. The experimental
     results show that \emph{best locality} placement of intervals
-    achieves up to 15 percent speedup over \emph{worst} or
-    \emph{ignorant locality} placement. Cache hits are increased by up
-    to 50 percent and cache misses are reduced by up to 310 percent.
+    achieves up to 15 percent speedup while cache hits are increased
+    and cache misses reduced.
   \end{itemize}
 }
 
 \begin{frame}{Work-Stealing Intervals Scheduler}
   \begin{itemize}
   \item Employs a fixed number of worker threads
-  \item Each worker has a local deque to maintain its own pool of
-    ready intervals:
+  \item Each worker has local deque to maintain its own pool of ready
+    intervals:
     \begin{itemize}
     \item Puts and takes intervals to execute at the tail of its deque
     \item When its deque is empty, tries to steal an interval from the
@@ -170,20 +156,17 @@
 \note{
   \begin{itemize}
   \item The implementation of intervals makes use of a work-stealing
-    scheduler similar to those found in Cilk or Java 7.
-  \item The work-stealing intervals scheduler employs a fixed number
-    of threads called workers.
-  \item Each worker has a local double-ended queue to maintain its own
-    pool of ready intervals:
+    scheduler similar to those found in Cilk or Java 7. The intervals
+    scheduler employs a fixed number of threads called workers.
+  \item Each worker has a local deque to maintain its own pool of
+    ready intervals:
     \begin{itemize}
     \item When assigning a new interval to a worker, the worker puts
       it onto the tail of its deque. And when obtaining work, it takes
       a ready interval from the tail of its deque to execute.
     \item When a worker's deque is empty, it tries to steal an
       interval from the deque's head of a victim worker chosen at
-      random. If the victim's deque is empty, then the thief picks
-      another victim worker until it finds a victim whose deque it not
-      empty.
+      random.
     \end{itemize}
   \item Work-stealing scheduling reduces contention by having owner
     and thieves working on opposite sides of the deque: 
@@ -198,12 +181,10 @@
 
 \begin{frame}{Locality-Aware Intervals Scheduling}
   \begin{itemize}
-  \item Modern CMPs feature heterogeneous memory hierarchy:
+  \item Modern CMPs feature heterogeneous memory hierarchies:
     \begin{itemize}
-    \item Access times depend on which processor an interval is
-      running
-    \item May be more efficient to run an interval on one processor
-      than another
+    \item Access times depend on which processor interval is running
+    \item May be better to run interval on one processor than another
     \end{itemize}
   \item Locality-aware intervals can lead to improved performance:
     \begin{itemize}
@@ -240,9 +221,7 @@
   \item The current implementation of the intervals library uses a
     locality-ignorant work-stealing scheduler to schedule ready-to-run
     intervals.
-  \item When using locality-ignorant work-stealing we cannot fully
-    exploit the heterogeneous memory hierarchy of CMPs for our
-    benefit. Thus, we implement and analyze LASSI, a locality-aware
+  \item Thus, we implement and analyze LASSI, a locality-aware
     scheduler for intervals.
   \end{itemize}
 }
@@ -260,16 +239,7 @@
     we implement a synthetic multi-threaded locality-aware benchmark
     called \emph{Cache Stress Test}.
   \item This benchmark serves as a proof of concept for our plan to
-    introduce locality-aware intervals:
-    \begin{itemize}
-    \item If a multi-threaded benchmark with best possible locality
-      has better performance and fewer last-level cache misses than
-      the same benchmark with another or no specific locality, we
-      should be able to see the same effect when porting the benchmark
-      to a locality-aware implementation of intervals.  
-    \item Hence, we know whether it makes sense to design a
-      locality-aware intervals scheduler.
-    \end{itemize}
+    introduce locality-aware intervals.
   \end{itemize}
 }
 
@@ -297,16 +267,13 @@
 \note{
   \begin{itemize}
   \item We wrote our benchmark for ``mafushi'', our Intel Nehalem
-    system. ``mafushi'' system has 2 processors with 4 cores
-    each. Every core has its separate level 1 and 2 caches, but the
-    per-processor 8 MB level 3 cache is shared between all cores of
-    the same processor.
+    system. ``mafushi'' has 2 processors with 4 cores each. The two 8
+    MB L3 caches are shared between all cores of the same processor.
   \item \emph{Cache Stress Test} first randomly initializes two
     integer arrays of size 8 MB. This is equal to the size of the last
     level cache per processor.
   \item Then the benchmark creates 8 \emph{Cache Stress} threads per
-    core with their affinity set to this specific core. Overall, we
-    create 64 threads, bound to the 8 cores in groups of 8 threads.
+    core with their affinity set to this specific core.
   \item One half of the threads operate on the elements of the first
     array and the other half operate on the elements of the second
     array.
@@ -334,8 +301,7 @@
 
 \note{
   We implement several different variants of the \emph{Cache Stress
-    Test}, each having different locality properties. The figure
-  illustrates \emph{Best} and \emph{Worst Locality}:
+    Test}, each having different locality properties.
 
   \begin{itemize}
   \item In the \emph{Best Locality} implementation all the threads
@@ -344,8 +310,7 @@
     affinity for a core on the second processor.
   \item When using \emph{Worst Locality}, half the threads with
     affinity for a core on the first processor work on the first
-    array, and the other half works on the second array and vice
-    versa.
+    array, and the other half work on the second array and vice versa.
   \end{itemize}
   
   Besides \emph{Best} and \emph{Worst Locality} we also implement
@@ -353,8 +318,7 @@
 
   \begin{itemize}
   \item In the \emph{Ignorant Locality} variant, the threads are not
-    bound to any specific core, i.e. they are \emph{ignorant} of their
-    locality.
+    bound to any specific core.
   \item When using \emph{Random Locality}, the affinity of the threads
     is set to a \emph{random} core.
   \end{itemize}
@@ -365,10 +329,9 @@
     \begin{column}{0.49\textwidth}
       \begin{itemize}
       \item \emph{Best locality} variant: Sharing threads run on same
-        processor, perform prefetching of array elements for each
-        other
-      \item Other variants: Threads compete for L3 caches, overwriting
-        each other's entries
+        processor $\rightarrow$ perform prefetching of array elements
+        for each other
+      \item Other variants: Threads compete for L3 caches
       \item \emph{Best locality} has significant speedup of up to
         $1.55\times$
   \end{itemize}
@@ -384,9 +347,6 @@
 
 \note{
   \begin{itemize}
-  \item As the name already gives away, the main idea behind the
-    \emph{Cache Stress Test} benchmark is to stress the cache and
-    provoke cache prefetching and contention.
   \item When we are using the \emph{best locality} variant, we move
     all sharing threads onto the same processor which will perform
     prefetching of the array elements for each other. That is, they
@@ -397,10 +357,9 @@
     entries. Instead of reading from the processor's local cache,
     threads either have to read from the other processor's cache or
     the memory subsystem. Reading from those places is much more
-    expensive than reading from the local L3 cache.
+    expensive.
   \item The \emph{best locality} implementation shows a significant
-    speedup over the other locality benchmarks of $1.2\times$ --
-    $1.55\times$.
+    speedup over the other locality benchmarks of 20 to 55 percent.
   \end{itemize}
 }
 
@@ -434,11 +393,10 @@
 \note{
   \begin{itemize}
   \item Compared to the other benchmarks, the \emph{best locality}
-    benchmark has between $1.5\times$ and $1.8\times$ more L3 cache
-    read hits, and between $3.6\times$ and $4.5\times$ fewer L3 cache
-    read misses.
-  \item In the figure they are shown normalized to the measurements of
-    the \emph{best locality} implementation.
+    benchmark has between 50 and 80 percent more L3 cache read hits,
+    and between 360 and 450 percent fewer cache read misses.
+  \item The figure shows them normalized to the measurements of the
+    \emph{best locality} implementation.
   \end{itemize}
 }
 
@@ -513,28 +471,23 @@
 
 \begin{frame}{Work-Stealing Places}
   \begin{itemize}
-  \item Work-stealing scheduler has fixed number of worker threads
   \item Traditional work-stealing scheduler designs: Every worker has
     local deque to maintain own pool of ready tasks
   \item LASSI uses \emph{Work-Stealing Places} instead:
     \begin{itemize}
     \item Each place has a fixed number of workers and a local deque
-      to maintain ready tasks
     \item Workers of a place share its local deque
     \item When the pool of a place is empty, its workers tries to
       steal a task from the pool of a victim place chosen at random
     \end{itemize}
-  \item Number of places fixed at the launch of an intervals program
   \end{itemize}
 \end{frame}
 
 \note{
   \begin{itemize}
-  \item A work-stealing scheduler employs a fixed number of threads
-    called workers.
   \item In traditional work-stealing scheduler designs, every worker
-    has a local double-ended queue, or deque, to maintain its own pool
-    of ready tasks from which it obtains work.
+    has a local deque, to maintain its own pool of ready tasks from
+    which it obtains work.
   \item LASSI uses \emph{Work-Stealing Places} instead:
     \begin{itemize}
     \item Each work-stealing place has a fixed number of workers and a
@@ -545,8 +498,6 @@
       tries to steal a task from the pool of a victim place chosen at
       random.
     \end{itemize}
-  \item The number of places is fixed at the time an intervals program
-    is launched: There is no construct to create a new place
   \end{itemize}
 }
 
@@ -565,23 +516,18 @@
   \item Places are virtual: The mapping of physical units to places is
     performed by a concrete implementation of the abstract
     \lstinline!Places! class.
-  \item For our test machine we define a place for each processor:
-    Place 0 consists of the physical units 0, 2, 4, and 6 and the
-    physical units 1, 3, 5, and 7 form place 1.
+  \item For our test machine we define a place for each processor.
   \end{itemize}
 }
 
 \begin{frame}{Alternative Designs}
   \begin{itemize}
-  \item Other implementations provide each worker with mailbox in
-    addition to work-stealing deque:
+  \item Other designs provide each worker with mailbox in addition to
+    work-stealing deque:
     \begin{itemize}
-    \item FIFO queue of pointers to tasks having affinity for the
-      worker
-    \item Worker pushes work item onto both its deque and the tail of
-      the mailbox of the worker the item has affinity for
-    \item Worker first tries to get work from its mailbox before
-      stealing
+    \item Worker pushes work item onto both its deque and into the
+      mailbox of the worker the item has affinity for
+    \item Worker tries to get work from its mailbox before stealing
     \item Work items must be idempotent as they can appear twice
     \end{itemize}
   \item Simplify by using a shared deque per \emph{Work-Stealing
@@ -600,24 +546,20 @@
   \item Other locality-aware work-stealing schedulers provide each
     worker with a mailbox in addition to the work-stealing deque:
     \begin{itemize}
-    \item A mailbox is a FIFO queue of pointers to work items that
-      have affinity for the worker.
-    \item So when creating a work item, a worker will push it onto
-      both the deque, as in normal work-stealing, and also onto the
-      tail of the mailbox of the worker that the interval has affinity
-      for.
-    \item Now a worker will first try to obtain work from its mailbox
+    \item When creating a work item, a worker will push it onto both
+      its deque and also into the tail of the mailbox of the worker
+      that the interval has affinity for.
+    \item A worker will first try to obtain work from its mailbox
       before attempting to steal.
     \item Because work items can appear twice, once in a mailbox and
       once in a deque, they have to be idempotent.
     \end{itemize}
-  \item However, we have decided to simplify our scheduler
-    implementation by using a shared deque per \emph{Work-Stealing
-      Place}.
-  \item We believe that this would not impact scalability as long as
-    the places are not too large. We could show that up to 8 workers
-    there is no significant difference between using a separate deque
-    for each worker or a shared deque per place.
+  \item We have decided to simplify our scheduler implementation by
+    using a shared deque per \emph{Work-Stealing Place}.
+  \item This will not impact scalability as long as the places are not
+    too large. We could show that up to 8 workers there is no
+    significant difference between using a separate deque for each
+    worker or a shared deque per place.
   \end{itemize}
 }
 
@@ -649,21 +591,13 @@
   \begin{itemize}
   \item In recent Java Virtual Machines, threads are implemented with
     native threads. This means there is a 1-to-1 correspondence
-    between Java and native threads. When using the GNU C library on
-    Linux, native threads are implemented with the Native POSIX
-    Threads Library where each thread maps to a kernel scheduling
-    entity.
+    between Java and native threads.
   \item Unfortunately the Java Threads API does not expose the ability
     to set the CPU or core affinity despite numerous use cases where
     it would be beneficial such as improving cache and network
     performance or real-time applications.
-  \item To bind the workers to a specific core, we wrote a small JNI
-    library:
-    \begin{itemize}
-    \item With \lstinline!pthread_self()! we get the native thread ID.
-    \item \lstinline!pthread_setaffinity_np()! sets the core affinity
-      of the worker thread.
-    \end{itemize}
+  \item So to bind the workers to a specific core, we wrote a small
+    JNI library.
   \end{itemize}
 }
 
@@ -697,14 +631,7 @@
     locality.
   \item In the Java HotSpot VM, the NUMA-aware allocator has been
     implemented to provide automatic memory placement optimizations
-    for Java applications:
-    \begin{itemize}
-    \item The allocator relies on a hypothesis that a thread that
-      allocates the object will be the most likely to use the object.
-    \item To ensure the fastest access to the new object, the
-      allocator places it in the memory region local to the allocating
-      thread.
-    \end{itemize}
+    for Java applications.
   \item To enable the NUMA-aware allocator, we invoke the JVM with the
     option \lstinline!UseNUMA! when using LASSI.
   \end{itemize}
@@ -717,54 +644,7 @@
   \tableofcontents[current]
 \end{frame}
 
-\note{
-  We present our performance evaluation of LASSI
-}
-
-\begin{frame}[fragile]{Intel Nehalem Test Machine}
-  \begin{columns}[c]
-    \begin{column}{0.57\textwidth}
-      \begin{itemize}
-      \item Intel Nehalem with 2 processors and 4 cores each
-      \item Ubuntu 9.04 with kernel 2.6.29 patched to support perfmon2
-      \item Sun Hotspot JDK 1.6.0\_20 invoked with:
-        \begin{lstlisting}[basicstyle=\fontsize{8}{9}\selectfont\ttfamily]
-  -server -Xmx4096M -Xms4096M
-  -Xss8M -XX:+UseNUMA
-        \end{lstlisting}
-      \item perfmon2 tracks:
-        \begin{itemize}
-        \item \lstinline!UNC_LLC_HITS.READ!: Number of L3 cache read
-          hits
-        \item \lstinline!UNC_LLC_MISS.READ!: Number of L3 cache read
-          misses
-        \end{itemize}
-      \end{itemize}
-    \end{column}
-    \begin{column}{0.43\textwidth}
-      \begin{center}
-        \includegraphics[width=\textwidth]{figures/mafushi-setup}
-      \end{center}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\note{
-  \begin{itemize}
-  \item The performance results are obtained on an Intel Nehalem
-    system with 2 processors and 8 cores, running Ubuntu with kernel
-    patched to support perfmon2.
-  \item The JVM used is Sun Hotspot which is invoked with the listed
-    parameters.
-  \item Besides the runtime of the benchmarks, we are mostly
-    interested in the count of cache hit and miss events. Since the
-    last level cache is part of the uncore, we have to use the uncore
-    PMU to count L3 cache events.
-  \item The execution times and cache event counts reported are the
-    average of the 3 best benchmark iterations from 10 separate
-    invocations.
-  \end{itemize}
-}
+\note{}
 
 \subsection{Non-Locality Benchmarks}
 
@@ -793,39 +673,39 @@
 
 \subsection{Locality Benchmarks}
 
-\begin{frame}{Cache Stress Test}
-  \begin{itemize}
-  \item Ported over from the threaded implementation
-  \item Randomly initializes two integer arrays of size 8 MB
-  \item Inline root interval produces 64 subintervals
-    \begin{itemize}
-    \item[$\rightarrow$] 32 with locality for \emph{place 0}, 32 for
-      \emph{place 1}
-    \end{itemize}
-  \item Half of the intervals work with array 0, the other half with
-    array 1
-  \item Each interval's task adds and multiplies all the elements of
-    its array 100 times
-  \end{itemize}
-\end{frame}
+% \begin{frame}{Cache Stress Test}
+%   \begin{itemize}
+%   \item Ported over from the threaded implementation
+%   \item Randomly initializes two integer arrays of size 8 MB
+%   \item Inline root interval produces 64 subintervals
+%     \begin{itemize}
+%     \item[$\rightarrow$] 32 with locality for \emph{place 0}, 32 for
+%       \emph{place 1}
+%     \end{itemize}
+%   \item Half of the intervals work with array 0, the other half with
+%     array 1
+%   \item Each interval's task adds and multiplies all the elements of
+%     its array 100 times
+%   \end{itemize}
+% \end{frame}
 
-\note{
-  \begin{itemize}
-  \item We ported the \emph{Cache Stress Test} benchmark from the
-    threaded to use intervals.
-  \item Like the threaded version, it first randomly initializes two
-    integer arrays of equal size to the last level cache per
-    processor.
-  \item Then it creates an inline root interval which produces 64
-    subintervals with their locality set to a specific place: 32 have
-    their locality set for \emph{place 0} and 32 for \emph{place 1}.
-  \item One half of the subintervals operate on the elements of the
-    first array and the other half operate on the elements of the
-    second array.
-  \item Each interval's task adds and multiplies all the elements of
-    its respective array 100 times.
-  \end{itemize}
-}
+% \note{
+%   \begin{itemize}
+%   \item We ported the \emph{Cache Stress Test} benchmark from the
+%     threaded to use intervals.
+%   \item Like the threaded version, it first randomly initializes two
+%     integer arrays of equal size to the last level cache per
+%     processor.
+%   \item Then it creates an inline root interval which produces 64
+%     subintervals with their locality set to a specific place: 32 have
+%     their locality set for \emph{place 0} and 32 for \emph{place 1}.
+%   \item One half of the subintervals operate on the elements of the
+%     first array and the other half operate on the elements of the
+%     second array.
+%   \item Each interval's task adds and multiplies all the elements of
+%     its respective array 100 times.
+%   \end{itemize}
+% }
 
 \begin{frame}{Cache Stress Test: Best and Worst Locality}
   \begin{columns}[c]
@@ -845,10 +725,10 @@
 \end{frame}
 
 \note{ 
-  Like in the threaded version, we implement several different
-  variants of the benchmark, each having different locality
-  properties. The figure illustrates \emph{Best} and \emph{Worst
-    Locality}:
+  The \emph{Cache Stress Test} benchmark was ported over from the
+  threaded implementation. We wrote several variants, each having
+  different locality properties. The figure illustrates \emph{Best}
+  and \emph{Worst Locality}:
 
   \begin{itemize}
   \item In the \emph{Best Locality} all the intervals working on the
@@ -859,16 +739,6 @@
     locality for \emph{place 0} work on the first array, and the other
     half work on the second array and vice versa for the intervals
     with locality for \emph{place 1}.
-  \end{itemize}
-
-  Besides \emph{Best} and \emph{Worst Locality} we also implement
-  variants with \emph{Ignorant} and \emph{Random Locality}:
-
-  \begin{itemize}
-  \item When using \emph{Ignorant Locality}, the intervals do not have
-    any locality set.
-  \item With \emph{Random Locality}, the locality of the intervals is
-    set to a \emph{random} place.
   \end{itemize}
 }
 
@@ -902,9 +772,10 @@
   \item When running the intervals implementations of the \emph{Cache
       Stress Test} benchmarks, we observe similar behavior to the
     threaded versions. The \emph{best locality} implementation is
-    about than 12\% faster compared to the other locality benchmarks.
-  \item The \emph{best locality} benchmark has up to $1.5\times$ more
-    L3 cache read hits and $3.1\times$ fewer L3 cache read misses than
+    about than 12 percent faster compared to the other locality
+    benchmarks.
+  \item The \emph{best locality} benchmark has up to 50 percent more
+    L3 cache read hits and 310 percent fewer cache read misses than
     the other benchmarks.
   \end{itemize}
 }
@@ -916,13 +787,12 @@
     \begin{itemize}
     \item[$\rightarrow$] Needs about 16 MB of memory
     \end{itemize}
-  \item Creates \numprint{8192} sorter intervals per worker, i.e. $8
-    \times \numprint{8192}$
+  \item Creates \numprint{8192} sorter intervals per worker
   \item Each sorter randomly initializes array of size
     $\numprint{4194304} / (8 \times \numprint{8192})$ and sorts it
     sequentially
   \item Mergers merge two neighboring sorted arrays into one sorted
-    array until all subarrays are merged into one single array
+    array until all subarrays are merged into a single array
   \end{itemize}
 \end{frame}
 
@@ -937,8 +807,8 @@
   \item Each sorter randomly initializes an array of the size
     mentioned on the slide and sorts it sequentially
   \item Merger intervals merge two neighboring sorted arrays into one
-    sorted array of doubled size until all subarrays are merged into
-    one single array.
+    sorted array of doubled size until all subarrays are merged into a
+    single array.
   \end{itemize}
 }
 
@@ -957,16 +827,12 @@
   \item The \emph{best locality} implementation puts data sharing
     intervals onto the same \emph{place}. Half the sorter intervals
     have locality for \emph{place 0} and the other half have their
-    locality set for \emph{place 1}. Merger intervals copy the
-    locality of the interval they get the left array to merge from,
-    i.e. they are scheduled on the same place as their left
-    predecessors in the tree hierarchy.
+    locality set for \emph{place 1}. Merger intervals are scheduled on
+    the same place as their left predecessors in the tree hierarchy.
   \item When using \emph{Worst Locality}, the sorter intervals have
     the same locality as in the \emph{best locality}
     implementation. The merger intervals set their locality to the
-    other place as their left predecessor in the tree hierarchy. This
-    means, if the left predecessor was scheduled on \emph{place 0},
-    then the merger is scheduled on \emph{place 1} and vice versa.
+    other place as their left predecessor in the tree hierarchy.
   \item In the \emph{Ignorant Locality} variant the sorter and merger
     intervals have no locality set.
   \end{itemize}
@@ -1004,9 +870,9 @@
       locality} implementation provides a speedup of up to $1.1\times$
     compared to the other locality benchmarks.
   \item The difference between the number of cache read hits and
-    misses is only marginal: The \emph{best locality} variant has just
-    about 2\% more cache read hits and 7\% less cache read misses than
-    the \emph{worst} and \emph{ignorant locality} variants:
+    misses is small: The \emph{best locality} variant has just about
+    2\% more cache read hits and 7\% less cache read misses than the
+    \emph{worst} and \emph{ignorant locality} variants:
     \begin{itemize}
     \item[$\rightarrow$] This is mainly because of the rather small
       benchmark size and limited level of data sharing between the
@@ -1050,7 +916,8 @@
 
   \begin{itemize}
   \item[$\Rightarrow$] Matrix multiplication can be reduced to 8
-    multiplications and 4 additions of $1024 \times 1024$ submatrices
+    multiplications and 4 additions of $(n/2) \times (n/2)$
+    submatrices
   \item[$\Rightarrow$] 8 multiplications can be calculated in parallel
     and when done, 4 additions can also be computed in parallel
   \end{itemize}
@@ -1182,30 +1049,20 @@
   \tableofcontents[current]
 \end{frame}
 
-\note{
-  At the end we conclude and summarize our research, and give some
-  ideas for future work.  
-}
+\note{}
 
 \begin{frame}{Conclusions}
   \begin{itemize}
   \item Introduced LASSI, a locality-aware scheduler for intervals
-    using locality hints provided by the programmer
   \item \emph{Work-Stealing Places} to support locality-awareness
   \item Performance of existing locality-ignorant programs comparable
     to the original scheduler implementation
   \item Scheduling data sharing intervals on the same processor:
     \begin{itemize}
     \item[$\rightarrow$] Prefetching of shared regions for one another
-    \item[$\rightarrow$] Up to $1.15\times$ speedup over
-      \emph{ignorant locality} placement
-    \item[$\rightarrow$] Cache hits increased by up to $1.5\times$ and
-      cache misses reduced by up to $3.1\times$
     \end{itemize}
   \item Benchmarks do not test scheduling non-communicating intervals
     with high memory footprints on different processors
-  \item Difficult to write benchmarks exploiting the memory hierarchy
-    of NUMA systems
   \end{itemize}
 \end{frame}
 
@@ -1220,19 +1077,13 @@
     with LASSI is comparable to the original scheduler implementation.
   \item By scheduling data sharing intervals on the same processor
     they perform prefetching of shared regions for one another which
-    improves performance. Our experimental results show that
-    \emph{best locality} placement of intervals can achieve up to 15
-    percent speedup over locality-ignorance. Cache hits can be
-    increased by up to 50 percent and cache misses can be reduced by
-    up to 310 percent.
+    improves performance. Our experimental results show a speedup as
+    well as an increase in L3 cache read hits and a decrease in cache
+    read misses.
   \item Our benchmarks do not test how scheduling non-communicating
     intervals with high memory footprints on different processors
     helps to reduce cache contention and potential cache capacity
     problems.
-  \item In general, it is not easy to write benchmarks exploiting the
-    memory hierarchy of NUMA systems. Many benchmarks mentioned in the
-    literature do not show the desired effects anymore due to advances
-    in hardware and software.
   \end{itemize}
 }
 
@@ -1243,20 +1094,18 @@
   \item Make underlying machine transparent to the user
   \item Extend \emph{Work-Stealing Places} to co-locate tasks and
     data
-  \item Avoid counter-productive steals when load balancing across
-    work-stealing places
+  \item Avoid counter-productive steals
   \item Online contention detection to dynamically reduce or increase
-    the number of worker threads depending on the system load
-  \item Explore \emph{Parallel Depth-First Scheduling} as a possible
-    replacement for \emph{Work-Stealing Scheduling} in intervals
+    number of worker threads depending on system load
+  \item Explore \emph{Parallel Depth-First Scheduling} as possible
+    replacement for \emph{Work-Stealing Scheduling}
   \end{itemize}
 \end{frame}
 
 \note{
   \begin{itemize}
-  \item A possible area of future work would be to improve the API of
-    \emph{Work-Stealing Places} and locality-aware intervals.
-  \item Places have to be manually configured for each system. This
+  \item A possible area of future work would be to improve the
+    API. Places have to be manually configured for each system. This
     should be automated by making the hardware transparent to the
     user.
   \item LASSI depends on the heuristics of the NUMA-aware allocator
@@ -1269,13 +1118,11 @@
     in the system. Online contention detection could be used to
     dynamically reduce or increase the number of worker threads.
   \item Another possible direction for future research would be to
-    explore \emph{Parallel Depth-First Scheduling} as a possible
-    replacement for \emph{Work-Stealing Scheduling} in intervals. In
-    PDF scheduling, tasks are assigned priorities in the same ordering
-    they would be executed in a sequential program. As a result, PDF
-    scheduling tends to employ constructive cache sharing as it
-    co-schedules threads in a way that simulates the sequential
-    execution order.
+    explore \emph{Parallel Depth-First Scheduling}. In PDF scheduling,
+    tasks are assigned priorities in the same ordering they would be
+    executed in a sequential program. As a result, PDF scheduling
+    tends to employ constructive cache sharing as it co-schedules
+    threads in a way that simulates the sequential execution order.
   \end{itemize}
 }
 
@@ -1288,8 +1135,7 @@
   \end{center}
 \end{frame}
 
-\note{
-}
+\note{}
 
 
 \appendix
@@ -1333,10 +1179,54 @@
   \end{thebibliography}
 \end{frame}
 
-\note{
-  Those are a few selected references I used in my work.
-}
+\note{}
 
+\subsection{Additional Material}
+
+\begin{frame}[fragile]{Intel Nehalem Test Machine}
+  \begin{columns}[c]
+    \begin{column}{0.57\textwidth}
+      \begin{itemize}
+      \item Intel Nehalem with 2 processors and 4 cores each
+      \item Ubuntu 9.04 with kernel 2.6.29 patched to support perfmon2
+      \item Sun Hotspot JDK 1.6.0\_20 invoked with:
+        \begin{lstlisting}[basicstyle=\fontsize{8}{9}\selectfont\ttfamily]
+  -server -Xmx4096M -Xms4096M
+  -Xss8M -XX:+UseNUMA
+        \end{lstlisting}
+      \item perfmon2 tracks:
+        \begin{itemize}
+        \item \lstinline!UNC_LLC_HITS.READ!: Number of L3 cache read
+          hits
+        \item \lstinline!UNC_LLC_MISS.READ!: Number of L3 cache read
+          misses
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/mafushi-setup}
+      \end{center}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item The performance results are obtained on an Intel Nehalem
+    system with 2 processors and 8 cores, running Ubuntu with kernel
+    patched to support perfmon2.
+  \item The JVM used is Sun Hotspot which is invoked with the listed
+    parameters.
+  \item Besides the runtime of the benchmarks, we are mostly
+    interested in the count of cache hit and miss events. Since the
+    last level cache is part of the uncore, we have to use the uncore
+    PMU to count L3 cache events.
+  \item The execution times and cache event counts reported are the
+    average of the 3 best benchmark iterations from 10 separate
+    invocations.
+  \end{itemize}
+}
 
 \subsection{Work-Stealing Queue Implementations}
 
@@ -1344,9 +1234,8 @@
   \begin{itemize}
   \item Performance of work-stealing schedulers in large part
     determined by the efficiency of the work queue
-  \item Non-blocking work-stealing scheduler queues employ atomic
-    synchronization primitives such as Compare-and-Swap instead of
-    using mutual exclusion
+  \item Non-blocking queues employ atomic synchronization primitives
+    such as Compare-and-Swap instead of mutual exclusion
   \item Current work-stealing queue of intervals uses mutual exclusion
     when trying to steal
   \end{itemize}
@@ -1354,9 +1243,8 @@
   \vspace{\stretch{1}}
 
   \begin{itemize}
-  \item[$\Rightarrow$] As a separate effort, we design and explore
-    alternative non-blocking queue implementations with the aim to
-    improve work-stealing performance
+  \item[$\Rightarrow$] Design and explore alternative non-blocking
+    queues with the aim of improving work-stealing performance
   \end{itemize}
 \end{frame}
 
@@ -1379,12 +1267,10 @@
 
 \begin{frame}{Results}
   \begin{itemize}
-  \item Hypothesis was that we could improve the performance of the
-    intervals scheduler with non-blocking work-stealing queues
-  \item Evaluated the performance of our queue implementations with
-    intervals implementations of various Java Grande Forum benchmarks
+  \item Evaluate the performance of our queues with intervals
+    implementations of various Java Grande Forum benchmarks
   \item None of the alternative work-stealing queues significantly
-    improves performance on the machines we had to test
+    improves performance on our test machines
   \end{itemize}
 
   \vspace{\stretch{1}}
@@ -1418,18 +1304,16 @@
 
 \begin{frame}{Future Work}
   \begin{itemize}
-  \item Explore the performance of the different work-stealing queue
-    implementations on machines with more than 8 cores
+  \item Explore the performance of the different work-stealing queues
+    on machines with more than 8 cores
   \item See how our work-stealing queues would benefit from using the
     steal-half algorithm of Hendler and Shavit
-  \item Prevent waste of memory by shrinking queues using arrays to
-    maintain work items again once they contain less items
   \item Using a shared pool of arrays:
     \begin{itemize}
-    \item When the queue needs a larger array, it allocates one of the
+    \item When the queue needs a larger array, allocate one of the
       appropriate size from the pool
     \item Whenever it shrinks to a smaller array and does not need the
-      larger array anymore, it can return it to the pool
+      larger array anymore, return it to the pool
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -1443,20 +1327,11 @@
   \item It may also be interesting to see how our work-stealing queues
     would benefit from using the steal-half algorithm of Hendler and
     Shavit.
-  \item One disadvantage of the queues using arrays to maintain work
-    items is that they do not shrink them again once the queue
-    contains less work items which might lead to a waste of
-    memory. Chase and Lev present a way of shrinking an array without
-    copying by keeping the reference to the smaller array when
-    expanding. When the queue shrinks back its array to the previous
-    array, only the elements that were modified while the larger array
-    was active need to be copied.
-  \item Another optimization Chase and Lev mention is working with a
-    shared pool of arrays. With the shared pool implementation,
-    whenever the queue needs a larger array, it allocates one of the
-    appropriate size from the pool, and whenever it shrinks to a
-    smaller array and does not need the larger array anymore, it can
-    return it to the pool.
+  \item Another optimization would be working with a shared pool of
+    arrays. With the shared pool implementation, whenever the queue
+    needs a larger array, it allocates one of the appropriate size
+    from the pool, and whenever it shrinks to a smaller array and does
+    not need the larger array anymore, it can return it to the pool.
   \end{itemize}
 }
 
