@@ -573,39 +573,71 @@
 }
 
 \begin{frame}{Alternative Designs}
-  TODO
+  \begin{itemize}
+  \item Other implementations provide each worker with mailbox in
+    addition to work-stealing deque:
+    \begin{itemize}
+    \item FIFO queue of pointers to tasks having affinity for the
+      worker
+    \item Worker pushes work item onto both its deque and the tail of
+      the mailbox of the worker the item has affinity for
+    \item Worker first tries to get work from its mailbox before
+      stealing
+    \item Work items must be idempotent as they can appear twice
+    \end{itemize}
+  \item Simplify by using a shared deque per \emph{Work-Stealing
+      Place}
+  \item Will not impact scalability as long as the places are small
+    \begin{itemize}
+    \item[$\rightarrow$] Up to 8 workers: No significant difference
+      between using separate deque for each worker or shared deque per
+      place
+    \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \note{
   \begin{itemize}
-  \item Other locality-aware work-stealing schedulers use a more
-    complex design. Acar et al. for example provide each worker with a
-    mailbox in addition to the work-stealing deque: ``A mailbox is a
-    FIFO queue of pointers to work items that have affinity for the
-    worker. So when creating a work item, a worker will push it onto
-    both the deque, as in normal work-stealing, and also onto the tail
-    of the mailbox of the worker that the interval has affinity
-    for. Now a worker will first try to obtain work from its mailbox
-    before attempting to steal. Because work items can appear twice,
-    once in a mailbox and once in a deque, they have to be
-    idempotent.''
+  \item Other locality-aware work-stealing schedulers provide each
+    worker with a mailbox in addition to the work-stealing deque:
+    \begin{itemize}
+    \item A mailbox is a FIFO queue of pointers to work items that
+      have affinity for the worker.
+    \item So when creating a work item, a worker will push it onto
+      both the deque, as in normal work-stealing, and also onto the
+      tail of the mailbox of the worker that the interval has affinity
+      for.
+    \item Now a worker will first try to obtain work from its mailbox
+      before attempting to steal.
+    \item Because work items can appear twice, once in a mailbox and
+      once in a deque, they have to be idempotent.
+    \end{itemize}
   \item However, we have decided to simplify our scheduler
     implementation by using a shared deque per \emph{Work-Stealing
-      Place}. We believe that this would not impact scalability as
-    long as the places are not too large. We could show that up to 8
-    workers there is no significant difference between using a
-    separate deque for each worker or a shared deque per place.
+      Place}.
+  \item We believe that this would not impact scalability as long as
+    the places are not too large. We could show that up to 8 workers
+    there is no significant difference between using a separate deque
+    for each worker or a shared deque per place.
   \end{itemize}
 }
 
 \begin{frame}{Setting Core Affinity of Worker Threads}
   \begin{columns}[c]
-    \begin{column}{0.65\textwidth}
+    \begin{column}{0.62\textwidth}
       \begin{itemize}
-      \item TODO
+      \item 1-to-1 correspondence between Java and native threads
+      \item Java Threads API does not expose ability to set the CPU or
+        core affinity
+      \item JNI library to bind workers to a core:
+        \begin{itemize}
+        \item \lstinline!pthread_self()! gets the native thread ID
+        \item \lstinline!pthread_setaffinity_np()! sets core affinity
+          of worker thread
+        \end{itemize}
       \end{itemize}
     \end{column}
-    \begin{column}{0.35\textwidth}
+    \begin{column}{0.38\textwidth}
       \begin{center}
         \includegraphics[width=\textwidth]{figures/java-threads} \\
         \tiny{Linux 1-to-1 thread mapping}
@@ -617,69 +649,65 @@
 \note{
   \begin{itemize}
   \item In recent Java Virtual Machines, threads are implemented with
-    native threads. A Java program using threads is no different from
-    a native program using threads, i.e. a Java thread is just a
-    native thread belonging to a JVM process. This means there is a
-    1-to-1 correspondence between Java and native threads. When using
-    the GNU C library on Linux, native threads are implemented with
-    the NPTL (Native POSIX Threads Library). NPTL is also a 1-to-1
-    implementation, meaning that each thread maps to a kernel
-    scheduling entity.
+    native threads. This means there is a 1-to-1 correspondence
+    between Java and native threads. When using the GNU C library on
+    Linux, native threads are implemented with the Native POSIX
+    Threads Library where each thread maps to a kernel scheduling
+    entity.
   \item Unfortunately the Java Threads API does not expose the ability
     to set the CPU or core affinity despite numerous use cases where
-    setting the affinity of threads would be beneficial -- such as
-    improving cache and network performance or real-time
-    applications. There exists a request for enhancement on this issue
-    but it was set to the state \emph{``Closed, Will Not Fix''}.
+    it would be beneficial such as improving cache and network
+    performance or real-time applications.
   \item To bind the workers to a specific core, we wrote a small JNI
     library:
     \begin{itemize}
-    \item With \lstinline!pthread_self()! we get the native thread
-      ID.
+    \item With \lstinline!pthread_self()! we get the native thread ID.
     \item \lstinline!pthread_setaffinity_np()! sets the core affinity
       of the worker thread.
     \end{itemize}
   \end{itemize}
 }
 
-\begin{frame}{Restrictions}
-  TODO
+\begin{frame}{Data Locality}
+  Setting core affinity of threads only controls locality of work
+
+  \begin{itemize}
+  \item[$\rightarrow$] No control over data locality
+  \end{itemize}
+
+  \vspace{\stretch{1}}
+
+  \begin{block}{Java HotSpot VM: NUMA-aware allocator}
+    \begin{itemize}
+    \item Provides automatic memory placement optimizations
+    \item Relies on a hypothesis that thread allocating an object will
+      be the most likely to use it
+      \begin{itemize}
+      \item[$\rightarrow$] Places it in the region local to the
+        allocating thread
+      \end{itemize}
+    \item Enabled by invoking the JVM with \lstinline!-XX:+UseNUMA!
+  \end{itemize}    
+  \end{block}
 \end{frame}
 
 \note{
   \begin{itemize}
-  \item Portability:
+  \item By setting the core affinity of threads, we only control the
+    locality of the work but we do not have control over data
+    locality.
+  \item In the Java HotSpot VM, the NUMA-aware allocator has been
+    implemented to provide automatic memory placement optimizations
+    for Java applications:
     \begin{itemize}
-    \item As we are directly using functions provided by POSIX
-      threads, our implementation is not portable across operating
-      systems that do not support the POSIX standard. To make our
-      library portable, it could be rewritten using \emph{Portable
-        Linux Processor Affinity (PLPA)} or \emph{Portable Hardware
-        Locality (hwloc)}.
+    \item The allocator relies on a hypothesis that a thread that
+      allocates the object will be the most likely to use the object.
+    \item To ensure the fastest access to the new object, the
+      allocator places it in the memory region local to the allocating
+      thread.
     \end{itemize}
-  \item Data Locality:
-    \begin{itemize}
-    \item By setting the core affinity of threads, we only control the
-      locality of the work but we do not have control over data
-      locality.
-    \item In a NUMA system every node has a direct connection to local
-      memory providing fast access, and an indirect connection to
-      remote memory with slower access. In the Intel Nehalem system
-      for example, local DRAM access takes $\sim 60$ ns, while remote
-      DRAM access takes $\sim 100$ ns.
-    \item In the Java HotSpot VM, the NUMA-aware allocator has been
-      implemented to provide automatic memory placement optimizations
-      for Java applications: ``The allocator controls the eden space
-      of the young generation of the heap, where most of the new
-      objects are created. It divides the space into regions each of
-      which is placed in the memory of a specific node. The allocator
-      relies on a hypothesis that a thread that allocates the object
-      will be the most likely to use the object. To ensure the fastest
-      access to the new object, the allocator places it in the region
-      local to the allocating thread.''
-    \item To enable the NUMA-aware allocator, we invoke the JVM with
-      the parameter \lstinline!-XX:+UseNUMA! when using LASSI.
-    \end{itemize}
+  \item To enable the NUMA-aware allocator, we invoke the JVM with the
+    option \lstinline!UseNUMA! when using LASSI.
   \end{itemize}
 }
 
