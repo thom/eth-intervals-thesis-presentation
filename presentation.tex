@@ -288,7 +288,7 @@
     \begin{column}{0.53\textwidth}
       \begin{center}
         \includegraphics[width=\textwidth]{figures/mafushi} \\
-        \tiny{Intel Nehalem Test System}
+        \tiny{Intel Nehalem test system}
       \end{center}
     \end{column}
   \end{columns}
@@ -319,14 +319,14 @@
   \begin{columns}[c]
     \begin{column}{0.50\textwidth}
       \begin{center}
-        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-best} \\
-        \tiny{Best Locality}     
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-threads-best} \\
+        \tiny{Best locality}     
       \end{center}
     \end{column}
     \begin{column}{0.50\textwidth}
       \begin{center}
-        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-worst} \\
-        \tiny{Worst Locality}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-threads-worst} \\
+        \tiny{Worst locality}
       \end{center}
     \end{column}
   \end{columns}
@@ -375,9 +375,8 @@
     \end{column}
     \begin{column}{0.51\textwidth}
       \begin{center}
-        \includegraphics[width=\textwidth]{figures/cache-stress-test} \\
-        \tiny{Execution times normalized to \emph{best locality}
-          implementation}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-threads} \\
+        \tiny{Execution times normalized to \emph{best locality}}
       \end{center}
     \end{column}
   \end{columns}
@@ -419,14 +418,14 @@
   \begin{columns}[c]
     \begin{column}{0.50\textwidth}
       \begin{center}
-        \includegraphics[width=\textwidth]{figures/cache-stress-test-cache-hits} \\
-        \tiny{Cache Read Hits}     
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-threads-cache-hits} \\
+        \tiny{Cache read hits}     
       \end{center}
     \end{column}
     \begin{column}{0.50\textwidth}
       \begin{center}
-        \includegraphics[width=\textwidth]{figures/cache-stress-test-cache-misses} \\
-        \tiny{Cache Read Misses}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-threads-cache-misses} \\
+        \tiny{Cache read misses}
       \end{center}
     \end{column}
   \end{columns}
@@ -719,15 +718,441 @@
 \end{frame}
 
 \note{
-  TODO
+  We present our performance evaluation of LASSI
 }
 
-\begin{frame}{TODO}
+\begin{frame}[fragile]{Intel Nehalem Test Machine}
+  \begin{columns}[c]
+    \begin{column}{0.57\textwidth}
+      \begin{itemize}
+      \item Intel Nehalem with 2 processors and 4 cores each
+      \item Ubuntu 9.04 with kernel 2.6.29 patched to support perfmon2
+      \item Sun Hotspot JDK 1.6.0\_20 invoked with:
+        \begin{lstlisting}[basicstyle=\fontsize{8}{9}\selectfont\ttfamily]
+  -server -Xmx4096M -Xms4096M
+  -Xss8M -XX:+UseNUMA
+        \end{lstlisting}
+      \item perfmon2 tracks:
+        \begin{itemize}
+        \item \lstinline!UNC_LLC_HITS.READ!: Number of L3 cache read
+          hits
+        \item \lstinline!UNC_LLC_MISS.READ!: Number of L3 cache read
+          misses
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/mafushi-setup}
+      \end{center}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item The performance results are obtained on an Intel Nehalem
+    system with 2 processors and 8 cores, running Ubuntu with kernel
+    patched to support perfmon2.
+  \item The JVM used is Sun Hotspot which is invoked with the listed
+    parameters.
+  \item Besides the runtime of the benchmarks, we are mostly
+    interested in the count of cache hit and miss events. Since the
+    last level cache is part of the uncore, we have to use the uncore
+    PMU to count L3 cache events.
+  \item The execution times and cache event counts reported are the
+    average of the 3 best benchmark iterations from 10 separate
+    invocations.
+  \end{itemize}
+}
+
+\subsection{Non-Locality Benchmarks}
+
+\begin{frame}{Java Grande Forum Benchmarks}
+  New scheduler implementation does not affect performance of existing
+  locality-ignorant intervals applications:
+
+  \vspace{\stretch{1}}
+
+  \begin{center}
+    \includegraphics[width=0.85\textwidth]{figures/mafushi-jgf}
+  \end{center}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item It is important that our new scheduler implementation does not
+    affect the performance of existing locality-ignorant intervals
+    applications. Thus, we run the locality-ignorant JGF benchmarks
+    with our new scheduler implementation.
+  \item As the figure shows, the performance of the locality-ignorant
+    JGF benchmarks executed on LASSI is comparable to the original
+    implementation.
+  \end{itemize}
+}
+
+\subsection{Locality Benchmarks}
+
+\begin{frame}{Cache Stress Test}
+  \begin{itemize}
+  \item Ported over from the threaded implementation
+  \item Randomly initializes two integer arrays of size 8 MB
+  \item Inline root interval produces 64 subintervals
+    \begin{itemize}
+    \item[$\rightarrow$] 32 with locality for \emph{place 0}, 32 for
+      \emph{place 1}
+    \end{itemize}
+  \item Half of the intervals work with array 0, the other half with
+    array 1
+  \item Each interval's task adds and multiplies all the elements of
+    its array 100 times
+  \end{itemize}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item We ported the \emph{Cache Stress Test} benchmark from the
+    threaded to use intervals.
+  \item Like the threaded version, it first randomly initializes two
+    integer arrays of equal size to the last level cache per
+    processor.
+  \item Then it creates an inline root interval which produces 64
+    subintervals with their locality set to a specific place: 32 have
+    their locality set for \emph{place 0} and 32 for \emph{place 1}.
+  \item One half of the subintervals operate on the elements of the
+    first array and the other half operate on the elements of the
+    second array.
+  \item Each interval's task adds and multiplies all the elements of
+    its respective array 100 times.
+  \end{itemize}
+}
+
+\begin{frame}{Cache Stress Test: Best and Worst Locality}
+  \begin{columns}[c]
+    \begin{column}{0.50\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-best} \\
+        \tiny{Best locality}     
+      \end{center}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-mafushi-worst} \\
+        \tiny{Worst locality}
+      \end{center}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\note{ 
+  Like in the threaded version, we implement several different
+  variants of the benchmark, each having different locality
+  properties. The figure illustrates \emph{Best} and \emph{Worst
+    Locality}:
+
+  \begin{itemize}
+  \item In the \emph{Best Locality} all the intervals working on the
+    first array have their locality set to \emph{place 0} and all
+    intervals working on the second array have their locality set to
+    \emph{place 1}.
+  \item When using \emph{Worst Locality} half the intervals with
+    locality for \emph{place 0} work on the first array, and the other
+    half work on the second array and vice versa for the intervals
+    with locality for \emph{place 1}.
+  \end{itemize}
+
+  Besides \emph{Best} and \emph{Worst Locality} we also implement
+  variants with \emph{Ignorant} and \emph{Random Locality}:
+
+  \begin{itemize}
+  \item When using \emph{Ignorant Locality}, the intervals do not have
+    any locality set.
+  \item With \emph{Random Locality}, the locality of the intervals is
+    set to a \emph{random} place.
+  \end{itemize}
+}
+
+\begin{frame}{Cache Stress Test: Performance}
+  \begin{itemize}
+  \item \emph{Best locality} has speedup of up to $1.12\times$
+  \item \emph{Best locality} benchmark has up to $1.5\times$ more L3
+    cache read hits and $3.1\times$ fewer read misses:
+  \end{itemize}
+
+  \vspace{\stretch{1}}
+
+  \begin{columns}[c]
+    \begin{column}{0.5\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-cache-hits} \\
+        \tiny{Cache read hits normalized to \emph{best locality}}
+      \end{center}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/cache-stress-test-cache-misses} \\
+        \tiny{Cache read misses normalized to \emph{best locality}}
+      \end{center}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item When running the intervals implementations of the \emph{Cache
+      Stress Test} benchmarks, we observe similar behavior to the
+    threaded versions. The \emph{best locality} implementation is
+    about than 12\% faster compared to the other locality benchmarks.
+  \item The \emph{best locality} benchmark has up to $1.5\times$ more
+    L3 cache read hits and $3.1\times$ fewer L3 cache read misses than
+    the other benchmarks.
+  \end{itemize}
+}
+
+\begin{frame}{Merge Sort}
+  \begin{itemize}
+  \item Uses divide-and-conquer to recursively sort \numprint{4194304}
+    randomly initialized integer values
+    \begin{itemize}
+    \item[$\rightarrow$] Needs about 16 MB of memory
+    \end{itemize}
+  \item Creates \numprint{8192} sorter intervals per worker, i.e. $8
+    \times \numprint{8192}$
+  \item Each sorter randomly initializes array of size
+    $\numprint{4194304} / (8 \times \numprint{8192})$ and sorts it
+    sequentially
+  \item Mergers merge two neighboring sorted arrays into one sorted
+    array until all subarrays are merged into one single array
+  \end{itemize}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item The \emph{Merge Sort} benchmark uses divide-and-conquer to
+    recursively sort randomly initialized integer values.
+  \item The integer values need about 16 MB of memory which is equal
+    to the size of the last level caches of our test machine.
+  \item \emph{Merge Sort} first creates \numprint{8192} sorter
+    intervals per worker.
+  \item Each sorter randomly initializes an array of the size
+    mentioned on the slide and sorts it sequentially
+  \item Merger intervals merge two neighboring sorted arrays into one
+    sorted array of doubled size until all subarrays are merged into
+    one single array.
+  \end{itemize}
+}
+
+\begin{frame}{Merge Sort: Locality}
+  \begin{center}
+    \includegraphics[width=\textwidth]{figures/mergesort-best-locality} \\
+    \tiny{Best locality}    
+  \end{center}
+\end{frame}
+
+\note{
+  We implement several variants of the benchmark, each having
+  different locality properties:
+
+  \begin{itemize}
+  \item The \emph{best locality} implementation puts data sharing
+    intervals onto the same \emph{place}. Half the sorter intervals
+    have locality for \emph{place 0} and the other half have their
+    locality set for \emph{place 1}. Merger intervals copy the
+    locality of the interval they get the left array to merge from,
+    i.e. they are scheduled on the same place as their left
+    predecessors in the tree hierarchy.
+  \item When using \emph{Worst Locality}, the sorter intervals have
+    the same locality as in the \emph{best locality}
+    implementation. The merger intervals set their locality to the
+    other place as their left predecessor in the tree hierarchy. This
+    means, if the left predecessor was scheduled on \emph{place 0},
+    then the merger is scheduled on \emph{place 1} and vice versa.
+  \item In the \emph{Ignorant Locality} variant the sorter and merger
+    intervals have no locality set.
+  \end{itemize}
+
+  The figure shows the place allocations for the benchmark variant
+  with \emph{best locality}.
+}
+
+\begin{frame}{Merge Sort: Performance}
+  \begin{columns}[c]
+    \begin{column}{0.49\textwidth}
+      \begin{itemize}
+      \item \emph{Best locality} has speedup of up to $1.1\times$
+      \item \emph{Best locality} benchmark has up to $1.02\times$ more
+        L3 cache read hits and $1.07\times$ fewer read misses:
+        \begin{itemize}
+        \item[$\rightarrow$] Rather small benchmark size and limited
+          level of data sharing
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.51\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/mergesort} \\
+        \tiny{Execution times normalized to \emph{best locality}}
+      \end{center}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\note{
+  \begin{itemize}
+  \item The figure illustrates the execution times normalized to that
+    of the \emph{best locality} implementation. The \emph{best
+      locality} implementation provides a speedup of up to $1.1\times$
+    compared to the other locality benchmarks.
+  \item The difference between the number of cache read hits and
+    misses is only marginal: The \emph{best locality} variant has just
+    about 2\% more cache read hits and 7\% less cache read misses than
+    the \emph{worst} and \emph{ignorant locality} variants:
+    \begin{itemize}
+    \item[$\rightarrow$] This is mainly because of the rather small
+      benchmark size and limited level of data sharing between the
+      intervals.
+    \end{itemize}
+  \end{itemize}
+}
+
+\begin{frame}{Block Matrix Multiplication}
+  TODO
+\end{frame}
+
+\note{
+
+  The \emph{Block Matrix Multiplication} benchmark multiplies two $n
+  \times n$ matrices $A$ and $B$ using intervals. The implementation
+  employs the following recursion:
+
+  \begin{eqnarray*}
+    \begin{pmatrix}
+      C_{00} & C_{01} \\
+      C_{10} & C_{11}
+    \end{pmatrix}
+    &
+    =
+    &
+    \begin{pmatrix}
+      A_{00} & A_{01} \\
+      A_{10} & A_{11}
+    \end{pmatrix}
+    \cdot
+    \begin{pmatrix}
+      B_{00} & B_{01} \\
+      B_{10} & B_{11}
+    \end{pmatrix}
+    \\[0.1cm]
+    &
+    =
+    &
+    \begin{pmatrix}
+      A_{00} \cdot B_{00} + A_{01} \cdot B_{10} & A_{00} \cdot B_{01} + A_{01} \cdot B_{11} \\
+      A_{10} \cdot B_{00} + A_{11} \cdot B_{10} & A_{10} \cdot B_{01} + A_{11} \cdot B_{11} \\
+    \end{pmatrix}
+  \end{eqnarray*}
+
+  \vspace{0.1cm}
+
+  Thus, the $n \times n$ matrix multiplication can be reduced to 8
+  multiplications and 4 additions of $(n/2) \times (n/2)$
+  submatrices. The 8 multiplications can be calculated in parallel and
+  when they are done, the 4 additions can also be computed in
+  parallel.
+
+  We run the \emph{Block Matrix Multiplication} benchmark to multiply
+  two random $2048 \times 2048$ matrices. A $2048 \times 2048$ matrix
+  needs about 16 MB of memory and should just about fit in the L3
+  cache of the two processors of our test machine.
+
+  The algorithm recursively splits the matrices $A$ and $B$ into
+  quadrants until the base case of size $32 \times 32$ is
+  reached. Then it multiplies the corresponding $32 \times 32$
+  submatrices of $A$ and $B$ using sequential matrix multiplication to
+  add them up.  
+}
+
+\begin{frame}{Block Matrix Multiplication: Quadrants}
   TODO
 \end{frame}
 
 \note{
   TODO
+
+  % \begin{figure}[!ht]
+  %   \centering
+  %   \includegraphics[width=0.88\linewidth]{locality-performance/matmult-quadrants}
+  %   \caption{Splitting matrix $A$ into quadrants}
+  %   \label{fig:locality-performance-matmult-quadrants}
+  % \end{figure}
+}
+
+\begin{frame}{Block Matrix Multiplication: Locality}
+  TODO
+\end{frame}
+
+\note{
+  TODO
+
+  We implement two variants of the benchmark, \emph{best locality} and
+  \emph{worst locality}:
+
+  \begin{description}
+  \item[Best Locality:] The \emph{best locality} benchmark runs all
+    addition and multiplication intervals of the submatrices of
+    quadrants 0 and 3 in \emph{place 0} and the ones of the quadrants
+    1 and 2 in \emph{place 1}. This way the places are able to share
+    their local L3 cache in an efficient way.
+  \item[Worst Locality:] The \emph{worst locality} benchmark runs the
+    multiplication and addition intervals in different places,
+    destroying cache locality.
+  \end{description}
+
+  The figure illustrates the division of matrix quadrants between
+  places for both variants.
+
+  % \begin{figure}[!ht]
+  %   \centering
+  %   \subfloat[Best Locality]{
+  %     \includegraphics[width=0.55\linewidth]{locality-performance/matmult-best-locality}
+  %     \label{fig:locality-performance-matmult-best-locality}
+  %   }
+  %   \\
+  %   \subfloat[Worst Locality]{
+  %     \includegraphics[width=0.6\linewidth]{locality-performance/matmult-worst-locality}
+  %     \label{fig:locality-performance-matmult-worst-locality}
+  %   }
+  %   \caption{\emph{Block Matrix Multiplication} quadrants with \emph{best} and \emph{worst locality}}
+  %   \label{fig:locality-performance-matmult-locality}
+  % \end{figure}
+}
+
+\begin{frame}{Block Matrix Multiplication: Performance}
+  TODO
+\end{frame}
+
+\note{
+  TODO
+
+  Table shows the execution times and the speedups over the sequential
+  algorithm for the \emph{best locality} and \emph{worst locality}
+  benchmark implementations. As expected, the implementation with
+  \emph{best locality} is faster than the one for the \emph{worst
+    locality}.
+
+  The figure depicts the execution time of the \emph{worst locality}
+  implementation normalized to that of the \emph{best locality}
+  implementation. The \emph{best locality} implementation shows a
+  speedup over the \emph{worst locality} of about $1.07\times$.
+
+  The difference between the number of cache read hits and misses is
+  little: The \emph{best locality} variant has just about 2\% more
+  cache read hits and 6\% less cache read misses than the \emph{worst
+    locality} variant. The main reason for this is the rather small
+  benchmark size and limited level of data sharing between the
+  intervals. Last level cache misses can have a significant impact on
+  the runtime nevertheless as is shown by the speedup of $1.07\times$
+  of the \emph{best locality} variant over the \emph{worst locality}.
 }
 
 
@@ -738,7 +1163,8 @@
 \end{frame}
 
 \note{
-  TODO
+  At the end we conclude and summarize our research, and give some
+  ideas for future work.  
 }
 
 \begin{frame}{Conclusions}
@@ -843,7 +1269,6 @@
 \end{frame}
 
 \note{
-  TODO
 }
 
 
