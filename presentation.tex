@@ -270,8 +270,7 @@
     system. ``mafushi'' has 2 processors with 4 cores each. The two 8
     MB L3 caches are shared between all cores of the same processor.
   \item \emph{Cache Stress Test} first randomly initializes two
-    integer arrays of size 8 MB. This is equal to the size of the last
-    level cache per processor.
+    integer arrays of size 8 MB.
   \item Then the benchmark creates 8 \emph{Cache Stress} threads per
     core with their affinity set to this specific core.
   \item One half of the threads operate on the elements of the first
@@ -314,14 +313,7 @@
   \end{itemize}
   
   Besides \emph{Best} and \emph{Worst Locality} we also implement
-  variants with \emph{Ignorant} and \emph{Random Locality}:
-
-  \begin{itemize}
-  \item In the \emph{Ignorant Locality} variant, the threads are not
-    bound to any specific core.
-  \item When using \emph{Random Locality}, the affinity of the threads
-    is set to a \emph{random} core.
-  \end{itemize}
+  variants with \emph{Ignorant} and \emph{Random Locality}.
 }
 
 \begin{frame}{Execution Times}
@@ -349,15 +341,9 @@
   \begin{itemize}
   \item When we are using the \emph{best locality} variant, we move
     all sharing threads onto the same processor which will perform
-    prefetching of the array elements for each other. That is, they
-    help to obtain and maintain the frequently used array elements in
-    the local L3 cache.
+    prefetching of the array elements for each other.
   \item The exact opposite happens in the other variants: Threads
-    compete for the L3 caches and overwrite each other's
-    entries. Instead of reading from the processor's local cache,
-    threads either have to read from the other processor's cache or
-    the memory subsystem. Reading from those places is much more
-    expensive.
+    compete for the L3 caches.
   \item The \emph{best locality} implementation shows a significant
     speedup over the other locality benchmarks of 20 to 55 percent.
   \end{itemize}
@@ -772,8 +758,7 @@
   \item When running the intervals implementations of the \emph{Cache
       Stress Test} benchmarks, we observe similar behavior to the
     threaded versions. The \emph{best locality} implementation is
-    about than 12 percent faster compared to the other locality
-    benchmarks.
+    about 12 percent faster compared to the other locality benchmarks.
   \item The \emph{best locality} benchmark has up to 50 percent more
     L3 cache read hits and 310 percent fewer cache read misses than
     the other benchmarks.
@@ -867,7 +852,7 @@
   \begin{itemize}
   \item The figure illustrates the execution times normalized to that
     of the \emph{best locality} implementation. The \emph{best
-      locality} implementation provides a speedup of up to $1.1\times$
+      locality} implementation provides a speedup of up to 10 percent
     compared to the other locality benchmarks.
   \item The difference between the number of cache read hits and
     misses is small: The \emph{best locality} variant has just about
@@ -924,46 +909,17 @@
 \end{frame}
 
 \note{
-  The \emph{Block Matrix Multiplication} benchmark multiplies two
-  random $2048 \times 2048$ matrices. A $2048 \times 2048$ matrix
-  needs about 16 MB of memory and should just about fit in the L3
-  cache of the two processors of our test machine.
-
-  We are using the following recursion:
-
-  \begin{eqnarray*}
-    \begin{pmatrix}
-      C_{00} & C_{01} \\
-      C_{10} & C_{11}
-    \end{pmatrix}
-    &
-    =
-    &
-    \begin{pmatrix}
-      A_{00} & A_{01} \\
-      A_{10} & A_{11}
-    \end{pmatrix}
-    \cdot
-    \begin{pmatrix}
-      B_{00} & B_{01} \\
-      B_{10} & B_{11}
-    \end{pmatrix}
-    \\[0.1cm]
-    &
-    =
-    &
-    \begin{pmatrix}
-      A_{00} \cdot B_{00} + A_{01} \cdot B_{10} & A_{00} \cdot B_{01} + A_{01} \cdot B_{11} \\
-      A_{10} \cdot B_{00} + A_{11} \cdot B_{10} & A_{10} \cdot B_{01} + A_{11} \cdot B_{11} \\
-    \end{pmatrix}
-  \end{eqnarray*}
-
-  \vspace{0.4cm}
-
-  Thus, the matrix multiplication can be reduced to 8 multiplications
-  and 4 additions of $(n/2) \times (n/2)$ submatrices. The 8
-  multiplications can be calculated in parallel and when they are
-  done, the 4 additions can also be computed in parallel. 
+  \begin{itemize}
+  \item The \emph{Block Matrix Multiplication} benchmark multiplies
+    two random $2048 \times 2048$ matrices. Each matrix needs about 16
+    MB of memory and should just about fit in the L3 cache of the two
+    processors of our test machine.
+  \item We are using the recursion, thus the matrix multiplication can
+    be reduced to 8 multiplications and 4 additions of $(n/2) \times
+    (n/2)$ submatrices. The 8 multiplications can be calculated in
+    parallel and when they are done, the 4 additions can also be
+    computed in parallel.
+  \end{itemize}
 }
 
 \begin{frame}{Block Matrix Multiplication: Locality}
@@ -1097,8 +1053,6 @@
   \item Avoid counter-productive steals
   \item Online contention detection to dynamically reduce or increase
     number of worker threads depending on system load
-  \item Explore \emph{Parallel Depth-First Scheduling} as possible
-    replacement for \emph{Work-Stealing Scheduling}
   \end{itemize}
 \end{frame}
 
@@ -1117,12 +1071,6 @@
   \item Worker threads share their assigned core with other processes
     in the system. Online contention detection could be used to
     dynamically reduce or increase the number of worker threads.
-  \item Another possible direction for future research would be to
-    explore \emph{Parallel Depth-First Scheduling}. In PDF scheduling,
-    tasks are assigned priorities in the same ordering they would be
-    executed in a sequential program. As a result, PDF scheduling
-    tends to employ constructive cache sharing as it co-schedules
-    threads in a way that simulates the sequential execution order.
   \end{itemize}
 }
 
