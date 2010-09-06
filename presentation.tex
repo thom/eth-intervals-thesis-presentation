@@ -1016,14 +1016,8 @@
 }
 
 \begin{frame}{Block Matrix Multiplication}
-  TODO
-\end{frame}
-
-\note{
-
-  The \emph{Block Matrix Multiplication} benchmark multiplies two $n
-  \times n$ matrices $A$ and $B$ using intervals. The implementation
-  employs the following recursion:
+  Multiplies two random $2048 \times 2048$ matrices $A$ and $B$ using the
+  recursion:
 
   \begin{eqnarray*}
     \begin{pmatrix}
@@ -1052,107 +1046,133 @@
     \end{pmatrix}
   \end{eqnarray*}
 
-  \vspace{0.1cm}
+  \vspace{\stretch{1}}
 
-  Thus, the $n \times n$ matrix multiplication can be reduced to 8
-  multiplications and 4 additions of $(n/2) \times (n/2)$
-  submatrices. The 8 multiplications can be calculated in parallel and
-  when they are done, the 4 additions can also be computed in
-  parallel.
+  \begin{itemize}
+  \item[$\Rightarrow$] Matrix multiplication can be reduced to 8
+    multiplications and 4 additions of $1024 \times 1024$ submatrices
+  \item[$\Rightarrow$] 8 multiplications can be calculated in parallel
+    and when done, 4 additions can also be computed in parallel
+  \end{itemize}
+\end{frame}
 
-  We run the \emph{Block Matrix Multiplication} benchmark to multiply
-  two random $2048 \times 2048$ matrices. A $2048 \times 2048$ matrix
+\note{
+  The \emph{Block Matrix Multiplication} benchmark multiplies two
+  random $2048 \times 2048$ matrices. A $2048 \times 2048$ matrix
   needs about 16 MB of memory and should just about fit in the L3
   cache of the two processors of our test machine.
 
-  The algorithm recursively splits the matrices $A$ and $B$ into
-  quadrants until the base case of size $32 \times 32$ is
-  reached. Then it multiplies the corresponding $32 \times 32$
-  submatrices of $A$ and $B$ using sequential matrix multiplication to
-  add them up.  
-}
+  We are using the following recursion:
 
-\begin{frame}{Block Matrix Multiplication: Quadrants}
-  TODO
-\end{frame}
+  \begin{eqnarray*}
+    \begin{pmatrix}
+      C_{00} & C_{01} \\
+      C_{10} & C_{11}
+    \end{pmatrix}
+    &
+    =
+    &
+    \begin{pmatrix}
+      A_{00} & A_{01} \\
+      A_{10} & A_{11}
+    \end{pmatrix}
+    \cdot
+    \begin{pmatrix}
+      B_{00} & B_{01} \\
+      B_{10} & B_{11}
+    \end{pmatrix}
+    \\[0.1cm]
+    &
+    =
+    &
+    \begin{pmatrix}
+      A_{00} \cdot B_{00} + A_{01} \cdot B_{10} & A_{00} \cdot B_{01} + A_{01} \cdot B_{11} \\
+      A_{10} \cdot B_{00} + A_{11} \cdot B_{10} & A_{10} \cdot B_{01} + A_{11} \cdot B_{11} \\
+    \end{pmatrix}
+  \end{eqnarray*}
 
-\note{
-  TODO
+  \vspace{0.4cm}
 
-  % \begin{figure}[!ht]
-  %   \centering
-  %   \includegraphics[width=0.88\linewidth]{locality-performance/matmult-quadrants}
-  %   \caption{Splitting matrix $A$ into quadrants}
-  %   \label{fig:locality-performance-matmult-quadrants}
-  % \end{figure}
+  Thus, the matrix multiplication can be reduced to 8 multiplications
+  and 4 additions of $(n/2) \times (n/2)$ submatrices. The 8
+  multiplications can be calculated in parallel and when they are
+  done, the 4 additions can also be computed in parallel. 
 }
 
 \begin{frame}{Block Matrix Multiplication: Locality}
-  TODO
+  \begin{columns}[c]
+    \begin{column}{0.31\textwidth}
+      \begin{center}
+        \includegraphics[width=\linewidth]{figures/matmult-best-locality} \\
+        \tiny{Best locality}
+      \end{center}
+    \end{column}
+    \begin{column}{0.31\textwidth}
+      \begin{center}
+        \includegraphics[width=\linewidth]{figures/matmult-worst-locality} \\
+        \tiny{Worst locality}
+      \end{center}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \note{
-  TODO
-
   We implement two variants of the benchmark, \emph{best locality} and
   \emph{worst locality}:
 
-  \begin{description}
-  \item[Best Locality:] The \emph{best locality} benchmark runs all
-    addition and multiplication intervals of the submatrices of
-    quadrants 0 and 3 in \emph{place 0} and the ones of the quadrants
-    1 and 2 in \emph{place 1}. This way the places are able to share
-    their local L3 cache in an efficient way.
-  \item[Worst Locality:] The \emph{worst locality} benchmark runs the
-    multiplication and addition intervals in different places,
-    destroying cache locality.
-  \end{description}
+  \begin{itemize}
+  \item The \emph{best locality} benchmark runs all addition and
+    multiplication intervals of the submatrices of quadrants 0 and 3
+    in \emph{place 0} and the ones of the quadrants 1 and 2 in
+    \emph{place 1}. This way the places are able to share their local
+    L3 cache in an efficient way.
+  \item The \emph{worst locality} benchmark runs the multiplication
+    and addition intervals in different places, destroying cache
+    locality.
+  \end{itemize}
 
   The figure illustrates the division of matrix quadrants between
   places for both variants.
-
-  % \begin{figure}[!ht]
-  %   \centering
-  %   \subfloat[Best Locality]{
-  %     \includegraphics[width=0.55\linewidth]{locality-performance/matmult-best-locality}
-  %     \label{fig:locality-performance-matmult-best-locality}
-  %   }
-  %   \\
-  %   \subfloat[Worst Locality]{
-  %     \includegraphics[width=0.6\linewidth]{locality-performance/matmult-worst-locality}
-  %     \label{fig:locality-performance-matmult-worst-locality}
-  %   }
-  %   \caption{\emph{Block Matrix Multiplication} quadrants with \emph{best} and \emph{worst locality}}
-  %   \label{fig:locality-performance-matmult-locality}
-  % \end{figure}
 }
 
 \begin{frame}{Block Matrix Multiplication: Performance}
-  TODO
+  \begin{columns}[c]
+    \begin{column}{0.49\textwidth}
+      \begin{itemize}
+      \item \emph{Best locality} has speedup of up to $1.07\times$
+      \item \emph{Best locality} benchmark has up to $1.02\times$ more
+        L3 cache read hits and $1.06\times$ fewer read misses:
+        \begin{itemize}
+        \item[$\rightarrow$] Rather small benchmark size and limited
+          level of data sharing
+        \end{itemize}
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.51\textwidth}
+      \begin{center}
+        \includegraphics[width=\textwidth]{figures/matmult} \\
+        \tiny{Execution times normalized to \emph{best locality}}
+      \end{center}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \note{
-  TODO
-
-  Table shows the execution times and the speedups over the sequential
-  algorithm for the \emph{best locality} and \emph{worst locality}
-  benchmark implementations. As expected, the implementation with
-  \emph{best locality} is faster than the one for the \emph{worst
-    locality}.
-
-  The figure depicts the execution time of the \emph{worst locality}
-  implementation normalized to that of the \emph{best locality}
-  implementation. The \emph{best locality} implementation shows a
-  speedup over the \emph{worst locality} of about $1.07\times$.
-
-  The difference between the number of cache read hits and misses is
-  little: The \emph{best locality} variant has just about 2\% more
-  cache read hits and 6\% less cache read misses than the \emph{worst
-    locality} variant. The main reason for this is the rather small
-  benchmark size and limited level of data sharing between the
-  intervals. Last level cache misses can have a significant impact on
-  the runtime nevertheless as is shown by the speedup of $1.07\times$
-  of the \emph{best locality} variant over the \emph{worst locality}.
+  \begin{itemize}
+  \item The figure depicts the execution time of the \emph{worst
+      locality} implementation normalized to that of the \emph{best
+      locality} implementation. The \emph{best locality}
+    implementation shows a speedup of about 7\%.
+  \item The difference between the number of cache read hits and
+    misses is little: The \emph{best locality} variant has just about
+    2\% more cache read hits and 6\% less cache read misses than the
+    \emph{worst locality} variant.
+    \begin{itemize}
+    \item[$\rightarrow$] The main reason for this is the rather small
+      benchmark size and limited level of data sharing between the
+      intervals.
+    \end{itemize}
+  \end{itemize}
 }
 
 
