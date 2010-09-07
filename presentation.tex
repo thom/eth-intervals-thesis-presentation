@@ -84,13 +84,7 @@
   \titlepage
 \end{frame}
 
-\note{
-  \begin{itemize}
-  \item Hi and welcome to my talk.
-  \item I'm going to present the work from my Master's thesis. The
-    topic was ``Advanced Scheduling for Intervals''.
-  \end{itemize}
-}
+\note{}
 
 
 \section*{Introduction}
@@ -127,10 +121,7 @@
     locality-ignorant programs executed with the new scheduler
     implementation is comparable to that of the original scheduler.
   \item We studied the performance of our new scheduler implementation
-    with benchmarks using data sharing intervals. The experimental
-    results show that \emph{best locality} placement of intervals
-    achieves up to 15 percent speedup while cache hits are increased
-    and cache misses reduced.
+    with benchmarks using data sharing intervals.
   \end{itemize}
 }
 
@@ -143,12 +134,6 @@
     \item Puts and takes intervals to execute at the tail of its deque
     \item When its deque is empty, tries to steal an interval from the
       deque's head of a victim worker chosen at random
-    \end{itemize}
-  \item Reduces contention by having owner and thieves working on
-    opposite sides of the deque
-    \begin{itemize}
-    \item Owner manipulates its deque in a LIFO (stack-like) manner
-    \item Stealing operates in a FIFO manner
     \end{itemize}
   \end{itemize}
 \end{frame}
@@ -167,14 +152,6 @@
     \item When a worker's deque is empty, it tries to steal an
       interval from the deque's head of a victim worker chosen at
       random.
-    \end{itemize}
-  \item Work-stealing scheduling reduces contention by having owner
-    and thieves working on opposite sides of the deque: 
-    \begin{itemize}
-    \item As long as a worker's deque is not empty, the worker
-      manipulates its deque in a stack-like manner.
-    \item And since steals take place at the head of the victim's
-      deque, stealing operates in a FIFO manner.
     \end{itemize}
   \end{itemize}
 }
@@ -381,8 +358,6 @@
   \item Compared to the other benchmarks, the \emph{best locality}
     benchmark has between 50 and 80 percent more L3 cache read hits,
     and between 360 and 450 percent fewer cache read misses.
-  \item The figure shows them normalized to the measurements of the
-    \emph{best locality} implementation.
   \end{itemize}
 }
 
@@ -394,12 +369,8 @@
 \end{frame}
 
 \note{
-  \begin{itemize}
-  \item Our experiments confirmed the hypothesis that the locality of
-    threads matters.
-  \item Thus, we decided to rewrite the intervals scheduler to support
-    locality hints provided by the programmer.
-  \end{itemize}
+  The experiments confirmed our hypothesis and we decided to rewrite
+  the intervals scheduler to support locality hints.
 }
 
 \subsection{Locality-Aware Intervals}
@@ -712,9 +683,7 @@
 
 \note{ 
   The \emph{Cache Stress Test} benchmark was ported over from the
-  threaded implementation. We wrote several variants, each having
-  different locality properties. The figure illustrates \emph{Best}
-  and \emph{Worst Locality}:
+  threaded implementation.
 
   \begin{itemize}
   \item In the \emph{Best Locality} all the intervals working on the
@@ -821,9 +790,6 @@
   \item In the \emph{Ignorant Locality} variant the sorter and merger
     intervals have no locality set.
   \end{itemize}
-
-  The figure shows the place allocations for the benchmark variant
-  with \emph{best locality}.
 }
 
 \begin{frame}{Merge Sort: Performance}
@@ -914,11 +880,11 @@
     two random $2048 \times 2048$ matrices. Each matrix needs about 16
     MB of memory and should just about fit in the L3 cache of the two
     processors of our test machine.
-  \item We are using the recursion, thus the matrix multiplication can
-    be reduced to 8 multiplications and 4 additions of $(n/2) \times
-    (n/2)$ submatrices. The 8 multiplications can be calculated in
-    parallel and when they are done, the 4 additions can also be
-    computed in parallel.
+  \item By using the recursion, the matrix multiplication can be
+    reduced to 8 multiplications and 4 additions of $(n/2) \times
+    (n/2)$ submatrices.
+  \item The multiplications can be calculated in parallel and when
+    they are done, the additions can also be computed in parallel.
   \end{itemize}
 }
 
@@ -953,9 +919,6 @@
     and addition intervals in different places, destroying cache
     locality.
   \end{itemize}
-
-  The figure illustrates the division of matrix quadrants between
-  places for both variants.
 }
 
 \begin{frame}{Block Matrix Multiplication: Performance}
