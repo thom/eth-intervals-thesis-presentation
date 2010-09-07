@@ -358,6 +358,8 @@
   \item Compared to the other benchmarks, the \emph{best locality}
     benchmark has between 50 and 80 percent more L3 cache read hits,
     and between 360 and 450 percent fewer cache read misses.
+  \item The experiments confirmed our hypothesis and we decided to
+    rewrite the intervals scheduler to support locality hints.
   \end{itemize}
 }
 
@@ -368,10 +370,7 @@
   \tableofcontents[current]
 \end{frame}
 
-\note{
-  The experiments confirmed our hypothesis and we decided to rewrite
-  the intervals scheduler to support locality hints.
-}
+\note{}
 
 \subsection{Locality-Aware Intervals}
 
@@ -410,10 +409,9 @@
 \note{
   \begin{itemize}
   \item Intervals are represented as subtypes of the abstract class
-    \lstinline!Interval!.
+    \lstinline!Interval!. We extend it to support locality hints.
   \item To make an interval locality-aware, the programmer has to
-    specify the interval's locality when creating it. We extend the
-    abstract \lstinline!Interval! class to support locality hints.
+    specify the interval's locality when creating it.
   \item Locality hints are provided in the form of \lstinline!PlaceID!
     objects. They specify which place the interval should be executed
     on.
@@ -878,8 +876,7 @@
   \begin{itemize}
   \item The \emph{Block Matrix Multiplication} benchmark multiplies
     two random $2048 \times 2048$ matrices. Each matrix needs about 16
-    MB of memory and should just about fit in the L3 cache of the two
-    processors of our test machine.
+    MB of memory.
   \item By using the recursion, the matrix multiplication can be
     reduced to 8 multiplications and 4 additions of $(n/2) \times
     (n/2)$ submatrices.
@@ -1022,7 +1019,8 @@
 \note{
   \begin{itemize}
   \item A possible area of future work would be to improve the
-    API. Places have to be manually configured for each system. This
+    API.
+  \item Places have to be manually configured for each system. This
     should be automated by making the hardware transparent to the
     user.
   \item LASSI depends on the heuristics of the NUMA-aware allocator
